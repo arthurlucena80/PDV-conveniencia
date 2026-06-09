@@ -1,0 +1,81 @@
+# ============================================================
+# .gitignore — Arquivos que o Git deve IGNORAR
+#
+# Arquivos listados aqui NÃO são enviados ao GitHub.
+# Importante para:
+#   1. Segurança: não vazar senhas e chaves secretas
+#   2. Organização: não versionar arquivos gerados automaticamente
+# ============================================================
+
+# ── Dependências ────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Next.js — Build e cache ──────────────────────────────────
+.next/
+out/
+build/
+dist/
+
+# ── Variáveis de ambiente — NUNCA versionar! ────────────────
+# Contêm senhas, chaves secretas e URLs de banco de dados.
+# Use .env.example como modelo (esse SIM vai ao Git).
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.docker
+.env.staging
+
+# ── Logs de debug ────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# ── Arquivos do sistema operacional ─────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── IDEs e Editores ──────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.history/
+
+# ── TypeScript ────────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Prisma ───────────────────────────────────────────────────
+# O schema.prisma VAI ao git — só ignora o cliente gerado
+prisma/generated/
+
+# ── Vercel / Deploy ──────────────────────────────────────────
+.vercel
+
+# ── Testes ───────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Docker — volumes locais ──────────────────────────────────
+# Dados do banco local (não versionar dados!)
+postgres_data/
+redis_data/
+pgadmin_data/

@@ -1,0 +1,95 @@
+# ============================================================
+# docker/docker-compose.db.yml
+#
+# SERVIÇO ISOLADO: Banco de Dados PostgreSQL
+#
+# Para que serve?
+# Sobe APENAS o banco de dados. Ideal para desenvolvimento
+# local onde você roda o Next.js com "npm run dev" mas
+# quer o banco rodando no Docker.
+#
+# Como usar:
+#   docker compose -f docker/docker-compose.db.yml up -d
+#
+# Para parar:
+#   docker compose -f docker/docker-compose.db.yml down
+#
+# Para ver os logs:
+#   docker compose -f docker/docker-compose.db.yml logs -f
+#
+# Para limpar dados (CUIDADO — apaga o banco!):
+#   docker compose -f docker/docker-compose.db.yml down -v
+# ============================================================
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: pdv_banco
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-pdv_banco}
+      POSTGRES_USER:     ${POSTGRES_USER:-pdv_usuario}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pdv_senha_segura_2024}
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    volumes:
+      - pdv_postgres_data:/var/lib/postgresql/data
+
+    # Porta 5432 exposta no host — conecte com DBeaver, pgAdmin, etc.
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+    networks:
+      - pdv_db_net
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pdv_usuario} -d ${POSTGRES_DB:-pdv_banco}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    # Labels para organização
+    labels:
+      com.pdv.service: "database"
+      com.pdv.description: "PostgreSQL 16 — Banco de dados do PDV"
+
+  # ── Interface Gráfica do Banco (opcional) ─────────────────
+  # Acesse em: http://localhost:5050
+  # Email: admin@pdv.local | Senha: admin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pdv_pgadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@pdv.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    networks:
+      - pdv_db_net
+    volumes:
+      - pdv_pgadmin_data:/var/lib/pgadmin
+    labels:
+      com.pdv.service: "pgadmin"
+      com.pdv.description: "pgAdmin 4 — Interface gráfica do banco"
+
+volumes:
+  pdv_postgres_data:
+    driver: local
+    labels:
+      com.pdv.description: "Dados persistentes do PostgreSQL"
+  pdv_pgadmin_data:
+    driver: local
+
+networks:
+  pdv_db_net:
+    name: pdv_db_net
+    driver: bridge

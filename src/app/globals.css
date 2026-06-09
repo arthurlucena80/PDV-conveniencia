@@ -1,0 +1,270 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Caderno PDV — Brand Tokens ─── */
+@theme inline {
+  /* Fonts */
+  --font-sans: var(--font-sora), 'Sora Fallback', system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono Fallback', monospace;
+  --font-heading: var(--font-sora), sans-serif;
+
+  /* Brand colors as Tailwind utilities */
+  --color-caderno-bg:        #0C0F0A;
+  --color-caderno-surface:   #111A14;
+  --color-caderno-surface2:  #162119;
+  --color-caderno-border:    #1E2E21;
+  --color-caderno-text:      #F4F6F3;
+  --color-caderno-muted:     #7A9B82;
+  
+  --color-caderno-green:     #00805A;
+  --color-caderno-green-light: #00A872;
+  --color-caderno-green-glow: #00805A40;
+  
+  --color-caderno-amber:     #F59E0B;
+  --color-caderno-amber-light: #FCD34D;
+  
+  --color-caderno-red:       #E53935;
+  --color-caderno-red-glow:  #E5393520;
+
+  /* Shadcn/Radix design tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+}
+
+/* ─── Caderno Dark Mode (default, only mode) ─── */
+:root {
+  --background:            #0C0F0A;
+  --foreground:            #F4F6F3;
+  --card:                  #111A14;
+  --card-foreground:       #F4F6F3;
+  --popover:               #111A14;
+  --popover-foreground:    #F4F6F3;
+  --primary:               #00805A;
+  --primary-foreground:    #F4F6F3;
+  --secondary:             #162119;
+  --secondary-foreground:  #F4F6F3;
+  --muted:                 #1E2E21;
+  --muted-foreground:      #7A9B82;
+  --accent:                #1E2E21;
+  --accent-foreground:     #F4F6F3;
+  --destructive:           #E53935;
+  --border:                #1E2E21;
+  --input:                 #1E2E21;
+  --ring:                  #00805A;
+  --radius:                0.625rem;
+  --sidebar:               #111A14;
+  --sidebar-foreground:    #F4F6F3;
+  --sidebar-primary:       #00805A;
+  --sidebar-primary-foreground: #F4F6F3;
+  --sidebar-accent:        #1E2E21;
+  --sidebar-accent-foreground: #F4F6F3;
+  --sidebar-border:        #1E2E21;
+  --sidebar-ring:          #00805A;
+}
+
+.dark {
+  --background:            #0C0F0A;
+  --foreground:            #F4F6F3;
+  --card:                  #111A14;
+  --card-foreground:       #F4F6F3;
+  --popover:               #111A14;
+  --popover-foreground:    #F4F6F3;
+  --primary:               #00805A;
+  --primary-foreground:    #F4F6F3;
+  --secondary:             #162119;
+  --secondary-foreground:  #F4F6F3;
+  --muted:                 #1E2E21;
+  --muted-foreground:      #7A9B82;
+  --accent:                #1E2E21;
+  --accent-foreground:     #F4F6F3;
+  --destructive:           #E53935;
+  --border:                #1E2E21;
+  --input:                 #1E2E21;
+  --ring:                  #00805A;
+  --sidebar:               #111A14;
+  --sidebar-foreground:    #F4F6F3;
+  --sidebar-primary:       #00805A;
+  --sidebar-primary-foreground: #F4F6F3;
+  --sidebar-accent:        #1E2E21;
+  --sidebar-accent-foreground: #F4F6F3;
+  --sidebar-border:        #1E2E21;
+  --sidebar-ring:          #00805A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02";
+  }
+  html {
+    @apply font-sans;
+    background-color: #0C0F0A;
+  }
+}
+
+/* ─── Money numbers use JetBrains Mono ─── */
+.font-money {
+  font-family: var(--font-jetbrains), monospace;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Custom scrollbar for Caderno brand ─── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0C0F0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2E21;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00805A60;
+}
+
+/* ─── Caderno receipt effect for debt history ─── */
+.receipt-edge {
+  position: relative;
+}
+.receipt-edge::before,
+.receipt-edge::after {
+  content: '';
+  display: block;
+  height: 12px;
+  background-image: radial-gradient(circle at 6px 0, #0C0F0A 6px, #1a2e1d 6px);
+  background-size: 12px 12px;
+  background-repeat: repeat-x;
+}
+.receipt-edge::before {
+  background-position: left -6px top;
+}
+.receipt-edge::after {
+  background-image: radial-gradient(circle at 6px 12px, #0C0F0A 6px, #1a2e1d 6px);
+  background-position: left -6px bottom;
+}
+
+/* ─── Glow animations ─── */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 #00805A30; }
+  50% { box-shadow: 0 0 0 8px #00805A00; }
+}
+.glow-green-pulse {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* ─── Fade-in animation for page content ─── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* ─── Staggered children ─── */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+
+/* ─── Shimmer skeleton loader ─── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #111A14 25%, #162119 50%, #111A14 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.75rem;
+}
+
+/* ─── Card hover lift ─── */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 128, 90, 0.12);
+}
+
+/* ─── Active nav link (admin sidebar) ─── */
+.nav-link-active {
+  background: #162119 !important;
+  color: #00805A !important;
+  border-left: 2px solid #00805A;
+}
+
+/* ─── Number counter transition ─── */
+.num-transition {
+  transition: all 0.3s ease;
+}
+
+/* ─── Responsive table wrapper ─── */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Badge pulse for alerts ─── */
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Input focus glow ─── */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #00805A40;
+}
+
+/* ─── Button press effect ─── */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ─── Smooth page transitions ─── */
+main {
+  animation: fade-in-up 0.3s ease-out;
+}

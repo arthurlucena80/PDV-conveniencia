@@ -1,0 +1,44 @@
+# ============================================================
+# .gitattributes — Normalização de quebra de linha
+#
+# Garante que arquivos de texto usem LF (Unix) no repositório,
+# independente do sistema operacional do desenvolvedor.
+# Isso evita diffs gigantes causados por diferença de SO.
+# ============================================================
+
+# Padrão: todos os arquivos de texto usam LF
+* text=auto eol=lf
+
+# Arquivos de texto explícitos
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.mjs   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.css   text eol=lf
+*.scss  text eol=lf
+*.html  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.env*  text eol=lf
+*.sh    text eol=lf
+*.prisma text eol=lf
+
+# Scripts de shell SEMPRE com LF (quebra se tiver CRLF!)
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Arquivos binários — não devem ser modificados
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.eot  binary
+*.ttf  binary
+*.otf  binary
+*.pdf  binary

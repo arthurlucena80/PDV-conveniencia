@@ -1,0 +1,371 @@
+// ============================================================
+// schema.prisma (esquema-do-banco.prisma)
+//
+// O QUE ESTE ARQUIVO FAZ:
+// Define a ESTRUTURA do banco de dados. É o "plano arquitetônico"
+// de todas as tabelas e seus campos.
+//
+// ANALOGIA: Pense como uma planilha Excel:
+// - Cada "model" é uma aba da planilha (uma tabela)
+// - Cada linha dentro do model é uma coluna da planilha
+//
+// COMO APLICAR MUDANÇAS:
+// Depois de editar este arquivo, rode no terminal:
+//   npx prisma db push    → aplica as mudanças no banco
+//   npx prisma generate   → atualiza o código TypeScript do Prisma
+//
+// ONDE FICA: prisma/schema.prisma
+// ============================================================
+
+// ── Configuração do Gerador de Código ──────────────────────
+// O Prisma gera código TypeScript automaticamente a partir deste schema
+// Você NÃO edita o código gerado — ele é criado pelo "npx prisma generate"
+generator client {
+  provider = "prisma-client-js"  // Gera código JavaScript/TypeScript
+}
+
+// ── Configuração da Conexão com o Banco ────────────────────
+// Define qual banco de dados usar e como conectar
+datasource db {
+  provider = "postgresql"     // Tipo do banco: PostgreSQL
+  url      = env("DATABASE_URL")  // A URL de conexão vem da variável de ambiente
+  // env() lê do arquivo .env ou .env.docker — NUNCA coloque a senha diretamente aqui!
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ENUMERAÇÕES (Listas de valores possíveis)
+// "enum" = tipo especial que só aceita valores pré-definidos
+// Como uma lista de opções em um formulário
+// ═══════════════════════════════════════════════════════════
+
+// Perfis de usuário no sistema
+// Controla o que cada usuário pode acessar
+enum UserRole {
+  ADMIN     // Administrador: acesso total ao sistema
+  MANAGER   // Gerente: acesso ao admin, sem configurações
+  OPERATOR  // Operador (Somente PDV): apenas a tela de vendas, sem acesso ao admin
+}
+
+// Módulos do sistema para auditoria
+// Cada ação registrada indica a qual módulo pertence
+enum AuditModule {
+  AUTH      // Login e logout
+  SALES     // Vendas e comandas
+  PRODUCTS  // Produtos e preços
+  STOCK     // Movimentações de estoque
+  CLIENTS   // Clientes e fiado
+  USERS     // Funcionários e usuários
+  CASH      // Abertura e fechamento de caixa
+  SETTINGS  // Configurações do sistema
+  DISCOUNTS // Descontos concedidos em vendas
+}
+
+// Status possíveis de uma comanda/pedido
+enum OrderStatus {
+  OPEN      // Comanda aberta (em andamento)
+  CHECKOUT  // Em processo de fechamento
+  PAID      // Paga (venda concluída)
+  UNPAID    // Não paga (registrada no fiado)
+}
+
+// Formas de pagamento aceitas
+enum PaymentMethod {
+  PIX         // Transferência via PIX
+  CARD        // Cartão genérico
+  CARD_CREDIT // Cartão de crédito
+  CARD_DEBIT  // Cartão de débito
+  CASH        // Dinheiro em espécie
+  TAB         // Fiado (pagar depois)
+  MIXED       // Pagamento misto (ex: parte no dinheiro, parte no pix)
+}
+
+// Tipos de movimentação de estoque
+enum MovementType {
+  ENTRY      // Entrada de mercadoria (compra de fornecedor)
+  EXIT       // Saída (além das vendas normais)
+  ADJUSTMENT // Ajuste manual (contagem física)
+  LOSS       // Perda (produto vencido, quebra, roubo)
+  EXPIRATION // Vencimento
+}
+
+// Tipos de notificações do sistema
+enum NotificationType {
+  LOW_STOCK       // Produto com estoque baixo
+  OVERDUE_DEBT    // Cliente com dívida vencida
+  GOAL_REACHED    // Meta de vendas atingida
+  EXPIRING_PRODUCT // Produto perto do vencimento
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// TABELAS DO BANCO DE DADOS (Models)
+// Cada "model" vira uma tabela no PostgreSQL
+// ═══════════════════════════════════════════════════════════
+
+// ── TABELA: Usuários / Funcionários do Sistema ───────────────
+// Quem pode fazer login no sistema (administradores e funcionários)
+model User {
+  id         String    @id @default(uuid()) @db.Uuid
+  // @id = chave primária (identificador único)
+  // @default(uuid()) = gera automaticamente um ID único (UUID)
+  // @db.Uuid = tipo UUID no PostgreSQL (mais eficiente que texto)
+
+  name       String
+  // Nome completo do usuário (ex: "João Silva")
+
+  email      String    @unique
+  // @unique = cada email só pode existir UMA VEZ no banco
+
+  password   String
+  // Hash da senha — NUNCA guardamos a senha real!
+  // bcryptjs gera um hash como "$2b$10$..."
+
+  role       UserRole  @default(OPERATOR)
+  // Perfil do usuário (ADMIN, MANAGER ou OPERATOR)
+  // @default(OPERATOR) = padrão é operador/caixa (menos permissões)
+
+  // ── Dados pessoais do funcionário (novos campos) ──
+  cpf        String?   // CPF do funcionário — opcional
+  phone      String?   // Telefone/WhatsApp — opcional
+  avatar_url String?   // URL da foto do funcionário — opcional
+  hired_at   DateTime? // Data de admissão — opcional
+
+  is_active  Boolean   @default(true)
+  // Se false, o usuário está desativado (não consegue logar)
+
+  created_at DateTime  @default(now())
+  // Data de criação — gerada automaticamente pelo banco
+
+  updated_at DateTime  @default(now()) @updatedAt
+  // Data de última atualização — atualizada automaticamente
+
+  // ── Relacionamentos ──
+  // Estas linhas dizem que um User pode ter:
+  orders        Order[]        // Várias vendas (como operador)
+  auditLogs     AuditLog[]     // Vários registros de auditoria
+  debtPayments  DebtPayment[]  // Vários registros de pagamento de fiado
+  sessions      UserSession[]  // Sessões de login (para auditoria de acesso)
+  cashRegisters CashRegister[] // Aberturas/fechamentos de caixa
+}
+
+// ── TABELA: Categorias de Produtos ──────────────────────────
+// Para organizar os produtos em grupos (ex: Bebidas, Snacks)
+model Category {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String    @unique  // Nome único (ex: "Bebidas")
+  icon       String?            // Emoji ícone (ex: "🍺") — "?" = opcional
+  color      String?            // Cor em hexadecimal (ex: "#3B82F6") — opcional
+  created_at DateTime  @default(now())
+
+  // ── Relacionamento ──
+  products   Product[]  // Uma categoria tem vários produtos
+}
+
+// ── TABELA: Produtos ─────────────────────────────────────────
+// Todos os produtos à venda na conveniência
+model Product {
+  id            String    @id @default(uuid()) @db.Uuid
+  barcode       String?   @unique  // Código de barras — opcional mas único
+  name          String             // Nome do produto (ex: "Cerveja Heineken 355ml")
+  description   String?            // Descrição detalhada — opcional
+  brand         String?            // Marca (ex: "Heineken") — opcional
+  category_id   String?   @db.Uuid // ID da categoria — opcional
+  cost_price    Decimal?  @db.Decimal(10, 2)
+  // Preço de custo em R$ — Decimal(10,2) = até 10 dígitos, 2 casas decimais
+  // "?" = opcional (pode não saber o preço de custo)
+
+  price         Decimal   @db.Decimal(10, 2)
+  // Preço de venda em R$ — OBRIGATÓRIO
+
+  stock_current Int       @default(0)  // Quantidade atual em estoque
+  stock_min     Int       @default(0)  // Quantidade mínima (abaixo disso → alerta)
+  image_url     String?               // URL da foto do produto — opcional
+  is_active     Boolean   @default(true)  // false = produto pausado/inativo
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now()) @updatedAt
+
+  // ── Relacionamentos ──
+  category           Category?          @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  // fields: [category_id] = o campo nesta tabela que é a chave estrangeira
+  // references: [id] = o campo na tabela Category que ele referencia
+  // onDelete: SetNull = se a categoria for deletada, o produto fica sem categoria (não é deletado)
+
+  orderItems         OrderItem[]        // Itens de pedido que usam este produto
+  inventoryMovements InventoryMovement[] // Movimentações de estoque deste produto
+}
+
+// ── TABELA: Clientes ─────────────────────────────────────────
+// Cadastro de clientes que compram na conveniência
+model Client {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        // Nome do cliente — OBRIGATÓRIO
+  cpf          String?       // CPF — opcional
+  phone        String?       // Telefone — opcional
+  email        String?       // E-mail — opcional
+  birth_date   DateTime?     // Data de nascimento — opcional
+  address      String?       // Endereço — opcional
+  credit_limit Decimal       @default(0) @db.Decimal(10, 2)
+  // Limite de crédito: máximo que pode ficar devendo (0 = sem limite pré-definido)
+
+  total_debt   Decimal       @default(0) @db.Decimal(10, 2)
+  // Total atual em fiado (calculado automaticamente pelas transações)
+
+  notes        String?       // Observações — opcional
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @default(now()) @updatedAt
+
+  // ── Relacionamentos ──
+  orders       Order[]       // Pedidos do cliente
+  payments     DebtPayment[] // Pagamentos de fiado do cliente
+}
+
+// ── TABELA: Pedidos/Comandas ──────────────────────────────────
+// Cada venda ou comanda aberta
+model Order {
+  id             String         @id @default(uuid()) @db.Uuid
+  client_id      String?        @db.Uuid  // Cliente (opcional — vendas avulsas não têm)
+  user_id        String?        @db.Uuid  // Operador que fez a venda (futuro)
+  status         OrderStatus              // OPEN, PAID, UNPAID, etc.
+  total_amount   Decimal        @default(0) @db.Decimal(10, 2)  // Total da comanda
+  discount       Decimal        @default(0) @db.Decimal(10, 2)  // Desconto concedido
+  payment_method PaymentMethod?           // Forma de pagamento (vazio se ainda aberto)
+  notes          String?                  // Observações da venda
+  created_at     DateTime       @default(now())   // Quando a comanda foi aberta
+  closed_at      DateTime?                // Quando foi fechada (vazia se ainda aberta)
+
+  // ── Relacionamentos ──
+  client         Client?        @relation(fields: [client_id], references: [id])
+  user           User?          @relation(fields: [user_id], references: [id])
+  items          OrderItem[]    // Itens desta comanda
+}
+
+// ── TABELA: Itens do Pedido ───────────────────────────────────
+// Cada produto dentro de uma comanda
+// Ex: Se vendi 2 cervejas e 1 água, são 2 OrderItems
+model OrderItem {
+  id               String   @id @default(uuid()) @db.Uuid
+  order_id         String   @db.Uuid  // A qual comanda pertence
+  product_id       String   @db.Uuid  // Qual produto
+  quantity         Int                // Quantidade vendida
+  historical_price Decimal  @db.Decimal(10, 2)
+  // Preço no MOMENTO DA VENDA — gravado para histórico
+  // Se o preço do produto mudar depois, o histórico não muda!
+
+  // ── Relacionamentos ──
+  order   Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  // onDelete: Cascade = se o pedido for deletado, os itens também são
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Restrict)
+  // onDelete: Restrict = NÃO permite deletar um produto que tenha sido vendido!
+}
+
+// ── TABELA: Pagamentos de Fiado ───────────────────────────────
+// Registra cada vez que um cliente paga parte do que deve
+model DebtPayment {
+  id         String   @id @default(uuid()) @db.Uuid
+  client_id  String   @db.Uuid  // Quem pagou
+  user_id    String?  @db.Uuid  // Quem registrou o pagamento (operador)
+  amount     Decimal  @db.Decimal(10, 2)  // Valor pago
+  notes      String?            // Observações (ex: "Pago em dinheiro")
+  created_at DateTime @default(now())  // Data do pagamento
+
+  // ── Relacionamentos ──
+  client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [user_id], references: [id])
+}
+
+// ── TABELA: Movimentações de Estoque ─────────────────────────
+// Registra cada entrada, saída ou ajuste de estoque
+model InventoryMovement {
+  id         String       @id @default(uuid()) @db.Uuid
+  product_id String       @db.Uuid  // Qual produto
+  type       MovementType           // Tipo: ENTRY, EXIT, ADJUSTMENT, LOSS
+  quantity   Int                    // Quantidade movimentada (positivo ou negativo)
+  notes      String?                // Motivo/observação
+  created_at DateTime     @default(now())
+
+  // ── Relacionamento ──
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+// ── TABELA: Notificações ──────────────────────────────────────
+// Alertas gerados pelo sistema (estoque baixo, dívidas, etc.)
+model Notification {
+  id         String           @id @default(uuid()) @db.Uuid
+  type       NotificationType  // Tipo de alerta
+  title      String            // Título (ex: "Estoque Crítico")
+  message    String            // Mensagem detalhada
+  is_read    Boolean          @default(false)  // false = não lida (mostra o badge vermelho)
+  created_at DateTime         @default(now())
+}
+
+// ── TABELA: Auditoria Completa ────────────────────────────────
+// Registra TODAS as ações importantes no sistema
+// Útil para rastrear "quem fez o quê, quando e de onde"
+model AuditLog {
+  id         String       @id @default(uuid()) @db.Uuid
+  user_id    String?      @db.Uuid   // Quem fez a ação (null se foi o sistema)
+  action     String                  // O que foi feito (ex: "LOGIN", "SALE", "PRICE_CHANGE")
+  module     AuditModule? @default(SALES) // Qual módulo do sistema
+  entity     String                  // Em qual tabela (ex: "Product", "Order")
+  entity_id  String?                 // ID do registro afetado
+  old_data   Json?                   // Como estava antes (JSON completo)
+  new_data   Json?                   // Como ficou depois (JSON completo)
+  ip         String?                 // Endereço IP de onde a ação veio
+  created_at DateTime     @default(now())
+
+  // ── Relacionamento ──
+  user User? @relation(fields: [user_id], references: [id])
+}
+
+// ── TABELA: Sessões de Login ───────────────────────────────────
+// Registra cada vez que um usuário faz login e logout
+// Permite ver "João esteve no sistema das 08:00 às 18:00"
+model UserSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid   // Qual usuário fez login
+  ip         String?              // IP de onde o login veio
+  user_agent String?              // Navegador/dispositivo usado
+  logged_in  DateTime  @default(now())  // Quando entrou
+  logged_out DateTime?            // Quando saiu (null = ainda está logado)
+
+  // ── Relacionamento ──
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+// ── TABELA: Controle de Caixa ─────────────────────────────────
+// Registra a abertura e fechamento de caixa por funcionário
+// Permite detectar diferenças entre o esperado e o informado
+model CashRegister {
+  id              String    @id @default(uuid()) @db.Uuid
+  user_id         String    @db.Uuid   // Quem abriu o caixa
+  opened_at       DateTime  @default(now())  // Quando foi aberto
+  closed_at       DateTime?            // Quando foi fechado (null = ainda aberto)
+  opening_amount  Decimal   @db.Decimal(10,2)  // Valor inicial (fundo de troco)
+  closing_amount  Decimal?  @db.Decimal(10,2)  // Valor informado no fechamento
+  expected_amount Decimal?  @db.Decimal(10,2)  // Valor calculado pelo sistema
+  difference      Decimal?  @db.Decimal(10,2)  // Diferença (fechamento - esperado)
+  notes           String?              // Observações do fechamento
+
+  // ── Relacionamento ──
+  user User @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  // Restrict = não permite deletar um usuário que tenha registros de caixa
+}
+
+// ── TABELA: Configurações da Loja ────────────────────────────
+// Configurações gerais do estabelecimento
+// Só existe UM registro (id = "default")
+model Settings {
+  id            String  @id @default("default")
+  // @default("default") = o ID é sempre "default" — há apenas um registro!
+
+  store_name    String  @default("Minha Loja")     // Nome do estabelecimento
+  store_phone   String?                             // Telefone — opcional
+  store_address String?                             // Endereço — opcional
+  pix_key       String?                             // Chave PIX — opcional
+  currency      String  @default("BRL")             // Moeda (BRL = Real Brasileiro)
+  tax_rate      Decimal @default(0) @db.Decimal(5, 2) // Taxa de imposto (%)
+  low_stock_alert Int   @default(5)
+  // Quantidade mínima que dispara o alerta de estoque baixo
+}

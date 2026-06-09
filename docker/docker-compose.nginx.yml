@@ -1,0 +1,66 @@
+# ============================================================
+# docker/docker-compose.nginx.yml
+#
+# SERVIÇO ISOLADO: Nginx — Proxy Reverso
+#
+# Para que serve?
+# Sobe APENAS o Nginx. Útil para:
+#   - Adicionar HTTPS com certificado SSL
+#   - Hospedar múltiplos apps na mesma máquina
+#   - Servir arquivos estáticos de forma eficiente
+#
+# Pré-requisito: o serviço "app" deve estar rodando na
+# rede pdv_rede (ou ajuste o upstream no nginx.conf)
+#
+# Como usar (junto com o app):
+#   docker compose -f docker/docker-compose.app.yml \
+#                  -f docker/docker-compose.nginx.yml up -d
+# ============================================================
+
+services:
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: pdv_nginx
+    restart: unless-stopped
+
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"    # Pronto para HTTPS futuro
+
+    volumes:
+      # Configuração do Nginx (leitura apenas por segurança)
+      - ../nginx.conf:/etc/nginx/nginx.conf:ro
+
+      # Pasta para certificados SSL (Let's Encrypt)
+      # Crie a pasta e coloque seus certs aqui quando precisar de HTTPS
+      - ../ssl:/etc/nginx/ssl:ro
+
+      # Cache de arquivos estáticos do Next.js
+      - nginx_cache:/var/cache/nginx
+
+    networks:
+      - pdv_rede
+
+    depends_on:
+      - app
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+    labels:
+      com.pdv.service: "nginx"
+      com.pdv.description: "Nginx 1.27 — Proxy reverso e servidor web"
+
+volumes:
+  nginx_cache:
+    driver: local
+
+networks:
+  pdv_rede:
+    external: true    # Usa a rede já criada pelo docker-compose principal
+    name: pdv_rede

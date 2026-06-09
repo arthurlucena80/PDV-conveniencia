@@ -1,0 +1,150 @@
+# ============================================================
+# docker-compose.yml — Produção Completa
+#
+# Sobe os 3 serviços completos: db + app + nginx
+#
+# Como usar:
+#   docker compose up --build -d          ← primeira vez
+#   docker compose up -d                  ← após já ter buildo
+#   docker compose down                   ← parar tudo
+#   docker compose logs -f                ← ver logs em tempo real
+#   docker compose ps                     ← status dos containers
+#
+# Acessar depois de subir:
+#   http://localhost          ← sistema PDV (via Nginx)
+#   http://localhost:5432     ← banco (apenas internamente)
+# ============================================================
+
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # SERVIÇO 1: Banco de Dados PostgreSQL 16
+  # ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: pdv_banco
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-pdv_banco}
+      POSTGRES_USER:     ${POSTGRES_USER:-pdv_usuario}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pdv_senha_segura_2024}
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    volumes:
+      - pdv_postgres_data:/var/lib/postgresql/data
+
+    # Em produção, o banco NÃO expõe a porta no host (segurança!)
+    # Somente os outros containers da rede pdv_rede podem acessar.
+    # Se precisar acessar externamente, descomente a linha abaixo:
+    # ports:
+    #   - "5432:5432"
+
+    networks:
+      - pdv_rede
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pdv_usuario} -d ${POSTGRES_DB:-pdv_banco}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    labels:
+      com.pdv.service: "database"
+      com.pdv.version: "16"
+
+
+  # ──────────────────────────────────────────────────────────
+  # SERVIÇO 2: Aplicação Next.js 15
+  # ──────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+
+    container_name: pdv_app
+    restart: unless-stopped
+
+    environment:
+      # A URL usa "db" (nome do serviço acima) — Docker resolve o IP
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pdv_usuario}:${POSTGRES_PASSWORD:-pdv_senha_segura_2024}@db:5432/${POSTGRES_DB:-pdv_banco}
+
+      # ⚠️  MUDE ISSO EM PRODUÇÃO! Use uma chave aleatória longa.
+      # Gere com: openssl rand -base64 32
+      AUTH_SECRET: ${AUTH_SECRET:-pdv-chave-secreta-mude-em-producao}
+
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+
+    # Não expõe para o host — o Nginx é que vai receber na porta 80
+    expose:
+      - "3000"
+
+    networks:
+      - pdv_rede
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    labels:
+      com.pdv.service: "app"
+      com.pdv.framework: "nextjs-15"
+
+
+  # ──────────────────────────────────────────────────────────
+  # SERVIÇO 3: Nginx — Proxy Reverso na porta 80
+  # ──────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: pdv_nginx
+    restart: unless-stopped
+
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_cache:/var/cache/nginx
+
+    networks:
+      - pdv_rede
+
+    depends_on:
+      app:
+        condition: service_healthy
+
+    labels:
+      com.pdv.service: "nginx"
+
+
+# ──────────────────────────────────────────────────────────
+# VOLUMES
+# ──────────────────────────────────────────────────────────
+volumes:
+  pdv_postgres_data:
+    driver: local
+    labels:
+      com.pdv.description: "Dados persistentes do PostgreSQL"
+  nginx_cache:
+    driver: local
+
+
+# ──────────────────────────────────────────────────────────
+# REDES
+# ──────────────────────────────────────────────────────────
+networks:
+  pdv_rede:
+    name: pdv_rede
+    driver: bridge

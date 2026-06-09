@@ -1,0 +1,44 @@
+# ============================================================
+# .dockerignore — Arquivos que NÃO vão para o container Docker
+# (Arquivos Ignorados pelo Docker)
+#
+# Similar ao .gitignore, mas para o Docker.
+# Lista arquivos que NÃO devem ser copiados para dentro do container.
+# Isso torna o build mais rápido e a imagem menor.
+# ============================================================
+
+# Pasta de dependências instaladas localmente
+# O container vai reinstalar com "npm ci"
+node_modules
+
+# Pasta de build do Next.js (será gerada novamente dentro do container)
+.next
+
+# Arquivos de configuração de ambiente (contêm senhas!)
+.env
+.env.local
+.env.production
+# O .env.docker NÃO está aqui pois o docker-compose o usa diretamente
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# Arquivos do editor de código (não precisam ir para produção)
+.vscode
+.idea
+
+# Documentos e arquivos de desenvolvimento
+README.md
+GUIA_DO_PROJETO.md
+*.pdf
+
+# Scripts de desenvolvimento
+check_db.mjs
+cleanup_db.mjs
+merge_files.js
+seed.ts

@@ -1,0 +1,79 @@
+# ============================================================
+# docker-compose.dev.yml — Ambiente de Desenvolvimento
+#
+# Diferenças em relação ao docker-compose.yml (produção):
+#   ✅ Sem Nginx (acessa direto na porta 3000)
+#   ✅ Hot Reload (código montado como volume)
+#   ✅ NODE_ENV=development (logs mais detalhados)
+#   ✅ pgAdmin incluso (interface visual do banco)
+#   ✅ Porta do banco exposta no host
+#   ✅ Sem build multi-stage (mais rápido para desenvolver)
+#
+# Como usar:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Ou crie um alias no seu terminal:
+#   alias pdv-dev="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
+#   pdv-dev up --build
+# ============================================================
+
+services:
+
+  db:
+    # Herda tudo do docker-compose.yml e adiciona/sobrescreve:
+    ports:
+      - "5432:5432"    # Expõe o banco para ferramentas locais
+    environment:
+      POSTGRES_DB:       pdv_banco
+      POSTGRES_USER:     pdv_usuario
+      POSTGRES_PASSWORD: pdv_senha_segura_2024
+
+  app:
+    # Herda o build do docker-compose.yml
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder    # Usa o estágio builder (com devDependencies)
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://pdv_usuario:pdv_senha_segura_2024@db:5432/pdv_banco
+      AUTH_SECRET: dev-secret-nao-use-em-producao-12345
+
+    # Em dev, monta o código como volume para hot reload
+    volumes:
+      - .:/app                        # Código-fonte (live reload)
+      - /app/node_modules             # Preserva os node_modules do container
+      - /app/.next                    # Preserva o cache do Next.js
+
+    ports:
+      - "3000:3000"    # Acesso direto, sem Nginx
+
+    # Sobrescreve o comando de produção pelo de desenvolvimento
+    command: sh -c "npx prisma db push && npm run dev"
+
+  # ── pgAdmin: Interface Gráfica do Banco ───────────────────
+  # Acesse: http://localhost:5050
+  # Login: admin@pdv.local / admin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pdv_pgadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@pdv.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    networks:
+      - pdv_rede
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+
+volumes:
+  pgadmin_dev_data:
+    driver: local
+
+# Nota: Não inclui o serviço "nginx" — em dev, acesso direto na porta 3000

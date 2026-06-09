@@ -1,0 +1,68 @@
+# ============================================================
+# docker/docker-compose.app.yml
+#
+# SERVIÇO ISOLADO: Aplicação Next.js (PDV)
+#
+# Para que serve?
+# Sobe APENAS o app Next.js. Útil para rodar o frontend
+# enquanto o banco de dados está hospedado externamente
+# (ex: Neon, Supabase, ou outra máquina).
+#
+# Pré-requisito: defina DATABASE_URL no seu .env
+#
+# Como usar:
+#   docker compose -f docker/docker-compose.app.yml up --build -d
+#
+# Para ver logs:
+#   docker compose -f docker/docker-compose.app.yml logs -f app
+#
+# Para parar:
+#   docker compose -f docker/docker-compose.app.yml down
+# ============================================================
+
+services:
+
+  app:
+    build:
+      context: ..           # Contexto é a raiz do projeto (um nível acima)
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+
+    container_name: pdv_app
+    restart: unless-stopped
+
+    environment:
+      # Obrigatório: URL do banco de dados
+      DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL no .env}
+
+      # Obrigatório: chave secreta para sessões
+      AUTH_SECRET: ${AUTH_SECRET:?Defina AUTH_SECRET no .env}
+
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+
+    # Porta 3000 acessível diretamente no host
+    ports:
+      - "${APP_PORT:-3000}:3000"
+
+    networks:
+      - pdv_app_net
+
+    # Verifica se o app respondeu com HTTP 200
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      com.pdv.service: "app"
+      com.pdv.description: "Next.js 15 — Sistema PDV Conveniência"
+
+networks:
+  pdv_app_net:
+    name: pdv_app_net
+    driver: bridge
