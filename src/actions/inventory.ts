@@ -34,9 +34,18 @@ import { MovementType } from "@prisma/client";
 // (ENTRY, EXIT, ADJUSTMENT, LOSS, EXPIRATION)
 
 // ── Função Auxiliar ───────────────────────────────────────────
-// Serialização básica de movimentação (sem campos Decimal complexos)
+// Serializa a movimentação: converte Decimal e Date para tipos primitivos
+// que o React/Next.js consegue passar de Server Component → Client Component
 function serializeMovement(m: any) {
-  return { ...m }; // Por enquanto, só copia o objeto sem transformações
+  return {
+    ...m,
+    // Serializa os campos Decimal do produto incluído
+    product: m.product ? {
+      ...m.product,
+      price: Number(m.product.price),
+      cost_price: m.product.cost_price ? Number(m.product.cost_price) : null,
+    } : undefined,
+  };
 }
 
 // ── Listar Histórico de Movimentações ─────────────────────────
@@ -54,7 +63,8 @@ export async function getInventoryMovements(productId?: string) {
 
     take: 100, // Limita a 100 registros (evita carregar o banco todo)
   });
-  return movements;
+  // Serializa cada movimento (converte Decimal → Number)
+  return movements.map(serializeMovement);
 }
 
 // ── Registrar Nova Movimentação de Estoque ────────────────────

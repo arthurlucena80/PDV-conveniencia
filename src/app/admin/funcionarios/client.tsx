@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import {
-  createEmployee, updateEmployee, toggleEmployeeStatus, resetPassword, ROLE_LABELS
+  createEmployee, updateEmployee, toggleEmployeeStatus, resetPassword
 } from "@/actions/employee";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,12 @@ type Employee = {
 };
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN:    "Administrador",
+  MANAGER:  "Gerente",
+  OPERATOR: "Somente PDV",
+};
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN:    "#8B5CF6",

@@ -25,7 +25,8 @@ import { revalidatePath } from "next/cache";
 import { logEvent } from "@/actions/audit";
 
 // Nomes amigáveis dos perfis de acesso
-export const ROLE_LABELS: Record<string, string> = {
+// Não pode ser `export` em arquivo "use server" (só funções async podem ser exportadas)
+const ROLE_LABELS: Record<string, string> = {
   ADMIN:    "Administrador",
   MANAGER:  "Gerente",
   OPERATOR: "Somente PDV",
@@ -65,7 +66,12 @@ export async function getEmployees() {
     ...u,
     hired_at:        u.hired_at?.toISOString() || null,
     created_at:      u.created_at.toISOString(),
-    lastSession:     u.sessions[0] || null,
+    // Serializa a sessão: converte Date → string ISO (Next.js não serializa Date)
+    lastSession:     u.sessions[0] ? {
+      logged_in: u.sessions[0].logged_in.toISOString(),
+      logged_out: u.sessions[0].logged_out?.toISOString() || null,
+      ip: u.sessions[0].ip || null,
+    } : null,
     totalSales:      u.orders.length,
     totalRevenue:    u.orders.reduce((s, o) => s + Number(o.total_amount), 0),
     totalDiscounts:  u.orders.reduce((s, o) => s + Number(o.discount), 0),

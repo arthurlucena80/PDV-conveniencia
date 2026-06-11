@@ -43,8 +43,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Instala TODAS as dependências do projeto (incluindo as de desenvolvimento)
-# O flag --frozen-lockfile garante que seja instalado exatamente o que está no lockfile
-RUN npm ci
+# Usamos "npm install" em vez de "npm ci" para evitar erros de sincronização
+# entre o lock file gerado no Windows e as dependências nativas do Linux/Alpine
+RUN npm install
 
 
 # ─────────────────────────────────────────────
