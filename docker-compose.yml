@@ -34,11 +34,9 @@ services:
     volumes:
       - pdv_postgres_data:/var/lib/postgresql/data
 
-    # Em produção, o banco NÃO expõe a porta no host (segurança!)
-    # Somente os outros containers da rede pdv_rede podem acessar.
-    # Se precisar acessar externamente, descomente a linha abaixo:
-    # ports:
-    #   - "5432:5432"
+    # Expondo o banco na porta 5435 conforme solicitado para a VPS
+    ports:
+      - "0.0.0.0:5435:5432"
 
     networks:
       - pdv_rede
