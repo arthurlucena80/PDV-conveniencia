@@ -24,7 +24,7 @@ echo "================================"
 # O banco de dados pode demorar alguns segundos para iniciar.
 # Este loop tenta conectar até conseguir.
 echo "⏳ Aguardando o banco de dados ficar pronto..."
-until npx prisma db push --accept-data-loss 2>&1; do
+until npx prisma@6.4.1 db push --accept-data-loss 2>&1; do
   echo "   Banco ainda não está pronto. Tentando novamente em 3 segundos..."
   sleep 3
 done
