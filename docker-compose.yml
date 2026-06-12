@@ -1,7 +1,7 @@
 # ============================================================
 # docker-compose.yml — Produção Completa
 #
-# Sobe os 3 serviços completos: db + app + nginx
+# Sobe os 2 serviços completos: db + app
 #
 # Como usar:
 #   docker compose up --build -d          ← primeira vez
@@ -11,7 +11,7 @@
 #   docker compose ps                     ← status dos containers
 #
 # Acessar depois de subir:
-#   http://localhost          ← sistema PDV (via Nginx)
+#   http://localhost:3001     ← sistema PDV
 #   http://localhost:5432     ← banco (apenas internamente)
 # ============================================================
 
@@ -105,30 +105,6 @@ services:
       com.pdv.framework: "nextjs-15"
 
 
-  # ──────────────────────────────────────────────────────────
-  # SERVIÇO 3: Nginx — Proxy Reverso na porta 80
-  # ──────────────────────────────────────────────────────────
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: pdv_nginx
-    restart: unless-stopped
-
-    ports:
-      - "${HTTP_PORT:-80}:80"
-
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - nginx_cache:/var/cache/nginx
-
-    networks:
-      - pdv_rede
-
-    depends_on:
-      app:
-        condition: service_healthy
-
-    labels:
-      com.pdv.service: "nginx"
 
 
 # ──────────────────────────────────────────────────────────
@@ -139,8 +115,7 @@ volumes:
     driver: local
     labels:
       com.pdv.description: "Dados persistentes do PostgreSQL"
-  nginx_cache:
-    driver: local
+
 
 
 # ──────────────────────────────────────────────────────────
