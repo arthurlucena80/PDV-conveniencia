@@ -46,7 +46,7 @@ services:
       - /app/.next                    # Preserva o cache do Next.js
 
     ports:
-      - "3000:3000"    # Acesso direto, sem Nginx
+      - "0.0.0.0:3001:3000"    # Acesso direto na porta 3001, sem Nginx
 
     # Sobrescreve o comando de produção pelo de desenvolvimento
     command: sh -c "npx prisma db push && npm run dev"

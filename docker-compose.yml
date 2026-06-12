@@ -80,7 +80,9 @@ services:
       PORT: 3000
       HOSTNAME: "0.0.0.0"
 
-    # Não expõe para o host — o Nginx é que vai receber na porta 80
+    # Expondo na porta 3001 conforme solicitado
+    ports:
+      - "0.0.0.0:3001:3000"
     expose:
       - "3000"
 
