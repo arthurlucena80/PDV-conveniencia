@@ -105,6 +105,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copia os node_modules completos para que o Prisma CLI (db push) e bcrypt funcionem
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+
 # Copia o schema do Prisma (necessário para rodar migrações)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
