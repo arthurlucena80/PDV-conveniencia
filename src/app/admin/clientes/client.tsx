@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Search, Plus, Edit3, Users, AlertTriangle, CheckCircle2,
-  Phone, Mail, CreditCard, MapPin, X, User
+  Phone, Mail, CreditCard, MapPin, X, User, History
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { getClientLogs } from "@/actions/client-log";
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -41,8 +42,28 @@ export function ClientesAdminClient({ clients }: { clients: Client[] }) {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Client | null>(null);
+  
+  const [isLogOpen, setIsLogOpen] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
 
   const setField = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const openLog = async (c: Client) => {
+    setSelected(c);
+    setIsOpen(false);
+    setLogs([]);
+    setIsLogOpen(true);
+    setLogLoading(true);
+    try {
+      const data = await getClientLogs(c.id);
+      setLogs(data);
+    } catch (err) {
+      toast.error("Erro ao carregar histórico");
+    } finally {
+      setLogLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return clients.filter((c) => {
@@ -219,8 +240,11 @@ export function ClientesAdminClient({ clients }: { clients: Client[] }) {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3">
-                  <button onClick={() => openEdit(c)} className="p-2 rounded-lg transition-all hover:brightness-125" style={{ background: "#111A14", border: "1px solid #1A2B1D", color: "#6B9B73" }}>
+                <td className="px-4 py-3 flex gap-2 justify-end">
+                  <button onClick={() => openLog(c)} className="p-2 rounded-lg transition-all hover:brightness-125" style={{ background: "#111A14", border: "1px solid #1A2B1D", color: "#F59E0B" }} title="Ver Histórico/Log">
+                    <History size={14} />
+                  </button>
+                  <button onClick={() => openEdit(c)} className="p-2 rounded-lg transition-all hover:brightness-125" style={{ background: "#111A14", border: "1px solid #1A2B1D", color: "#6B9B73" }} title="Editar Cliente">
                     <Edit3 size={14} />
                   </button>
                 </td>
@@ -290,6 +314,47 @@ export function ClientesAdminClient({ clients }: { clients: Client[] }) {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Log Modal */}
+      <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
+        <DialogContent className="p-0 overflow-hidden max-w-2xl rounded-2xl border-0" style={{ background: "#111A14" }}>
+          <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: "1px solid #1A2B1D" }}>
+            <DialogTitle className="text-xl font-black" style={{ color: "#F0F4F0" }}>
+              Histórico de Atividades - {selected?.name}
+            </DialogTitle>
+            <button onClick={() => setIsLogOpen(false)} style={{ color: "#4A7A52" }}><X size={18} /></button>
+          </div>
+          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
+            {logLoading ? (
+               <p className="text-center text-sm" style={{ color: "#4A7A52" }}>Carregando log...</p>
+            ) : logs.length === 0 ? (
+               <p className="text-center text-sm" style={{ color: "#4A7A52" }}>Nenhum registro encontrado para este cliente.</p>
+            ) : (
+               <div className="space-y-3">
+                 {logs.map((log) => (
+                   <div key={log.id} className="p-4 rounded-xl flex items-center justify-between" style={{ background: "#0A0D0A", border: "1px solid #1A2B1D" }}>
+                     <div>
+                       <span className="text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded-full" style={{ 
+                          background: log.type === 'CONSUMPTION' ? '#E5393520' : log.type === 'PAYMENT' ? '#00805A20' : '#F59E0B20',
+                          color: log.type === 'CONSUMPTION' ? '#E53935' : log.type === 'PAYMENT' ? '#00805A' : '#F59E0B'
+                       }}>
+                         {log.type === 'CONSUMPTION' ? 'Consumo' : log.type === 'PAYMENT' ? 'Pagamento' : 'Atualização'}
+                       </span>
+                       <p className="mt-2 text-sm font-semibold" style={{ color: "#F0F4F0" }}>{log.description}</p>
+                       <p className="text-xs mt-1" style={{ color: "#4A7A52" }}>{new Date(log.created_at).toLocaleString("pt-BR")}</p>
+                     </div>
+                     {log.amount && (
+                        <div className="font-black text-lg" style={{ color: log.type === 'CONSUMPTION' ? '#E53935' : log.type === 'PAYMENT' ? '#00805A' : '#F59E0B' }}>
+                           {BRL(log.amount)}
+                        </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

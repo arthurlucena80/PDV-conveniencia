@@ -218,6 +218,7 @@ model Client {
   // ── Relacionamentos ──
   orders       Order[]       // Pedidos do cliente
   payments     DebtPayment[] // Pagamentos de fiado do cliente
+  logs         ClientLog[]   // Logs de histórico do cliente
 }
 
 // ── TABELA: Pedidos/Comandas ──────────────────────────────────
@@ -368,4 +369,24 @@ model Settings {
   tax_rate      Decimal @default(0) @db.Decimal(5, 2) // Taxa de imposto (%)
   low_stock_alert Int   @default(5)
   // Quantidade mínima que dispara o alerta de estoque baixo
+}
+
+// ── TABELA: Log de Clientes ──────────────────────────────────
+// Registra automaticamente o histórico de atividades de um cliente
+enum ClientLogType {
+  CONSUMPTION
+  PAYMENT
+  UPDATE
+}
+
+model ClientLog {
+  id          String        @id @default(uuid()) @db.Uuid
+  client_id   String        @db.Uuid
+  type        ClientLogType
+  description String
+  amount      Decimal?      @db.Decimal(10, 2)
+  created_at  DateTime      @default(now())
+
+  // ── Relacionamento ──
+  client      Client        @relation(fields: [client_id], references: [id], onDelete: Cascade)
 }

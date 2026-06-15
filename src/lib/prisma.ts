@@ -23,25 +23,80 @@ import { PrismaClient } from "@prisma/client";
 // "@prisma/client" é gerado automaticamente pelo "npx prisma generate"
 
 // ── Singleton: Instância única do Prisma ─────────────────────
-// globalThis = objeto global do Node.js (persiste entre reloads)
-// "as unknown as { prisma: PrismaClient }" = TypeScript casting
-// (dizemos ao TypeScript que globalThis tem uma propriedade "prisma")
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma: any };
 
-// Lógica de singleton:
-// - Se já existe uma instância em globalForPrisma.prisma, usa ela
-// - Se não existe, cria uma nova (new PrismaClient())
-// O operador "||" = "ou": usa o primeiro se ele existir, senão usa o segundo
-export const prisma = globalForPrisma.prisma || new PrismaClient();
-// "export const" = exporta para que outros arquivos usem:
-// import { prisma } from "@/lib/prisma"
+const basePrisma = new PrismaClient();
 
-// ── Salva na variável global (apenas em desenvolvimento) ──────
-// Em produção (NODE_ENV === "production"), não precisamos disso
-// pois o servidor não fica reiniciando a cada mudança no código.
-// Em desenvolvimento, o Next.js reinicia o servidor ao salvar arquivos,
-// então precisamos guardar a instância para não criar uma nova a cada vez.
+// Criamos o cliente estendido com os observers (gatilhos) para a Automação do ClientLog
+export const prisma = globalForPrisma.prisma || basePrisma.$extends({
+  query: {
+    order: {
+      async update({ args, query }) {
+        const result = await query(args);
+        
+        // Se a ordem foi fechada e pertence a um cliente, gera log de consumo
+        if (result && result.client_id && (args.data.status === "PAID" || args.data.status === "UNPAID")) {
+          const items = await basePrisma.orderItem.findMany({
+            where: { order_id: result.id },
+            include: { product: true }
+          });
+          
+          if (items.length > 0) {
+            const desc = items.map(i => `${i.quantity}x ${i.product.name}`).join(", ");
+            await basePrisma.clientLog.create({
+              data: {
+                client_id: result.client_id,
+                type: "CONSUMPTION",
+                description: `Consumiu: ${desc}`,
+                amount: result.total_amount
+              }
+            });
+          }
+        }
+        return result;
+      }
+    },
+    debtPayment: {
+      async create({ args, query }) {
+        const result = await query(args);
+        // Ao registrar um pagamento, gera log de pagamento
+        if (result && result.client_id) {
+          await basePrisma.clientLog.create({
+            data: {
+              client_id: result.client_id,
+              type: "PAYMENT",
+              description: result.notes ? `Pagamento: ${result.notes}` : "Pagamento de Fiado",
+              amount: result.amount
+            }
+          });
+        }
+        return result;
+      }
+    },
+    client: {
+      async update({ args, query }) {
+        const result = await query(args);
+        
+        // Evitar log infinito quando atualizamos a dívida (total_debt) via pagamento ou consumo
+        const dataKeys = Object.keys(args.data);
+        const isInternalUpdate = dataKeys.length === 1 && dataKeys.includes("total_debt");
+        
+        if (result && !isInternalUpdate) {
+          await basePrisma.clientLog.create({
+            data: {
+              client_id: result.id,
+              type: "UPDATE",
+              description: "Perfil ou dados cadastrais atualizados",
+              amount: null
+            }
+          });
+        }
+        return result;
+      }
+    }
+  }
+});
+
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
-// process.env.NODE_ENV = variável de ambiente que diz se é "development" ou "production"
