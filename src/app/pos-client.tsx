@@ -1047,7 +1047,7 @@ export function POSClient({
           )}
         </div>
 
-        <CheckoutBar total={total} itemCount={itemCount} onCharge={handleCharge} />
+        <CheckoutBar total={total} itemCount={itemCount} onCharge={handleCharge} order={activeOrder} />
 
         {activeOrder && (
           <CheckoutDrawer

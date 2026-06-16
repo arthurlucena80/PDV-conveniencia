@@ -205,23 +205,7 @@ export function CheckoutDrawer({
               </div>
             </div>
 
-            {/* WhatsApp Pre-charge */}
-            {order?.client?.phone && (
-              <a
-                href={`https://wa.me/${(() => {
-                  let p = order.client.phone.replace(/\D/g, "");
-                  if (!p.startsWith("55") && (p.length === 10 || p.length === 11)) p = `55${p}`;
-                  return p;
-                })()}?text=${encodeURIComponent(formatReceiptText({ ...order, discount: discountValue }))}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm transition-all hover:brightness-110 active:scale-95"
-                style={{ background: "#25D36615", color: "#25D366", border: "1px solid #25D36630", textDecoration: "none" }}
-              >
-                <MessageCircle className="size-5" />
-                Enviar Comanda via WhatsApp
-              </a>
-            )}
+
 
             {/* Payment Methods */}
             <div>
