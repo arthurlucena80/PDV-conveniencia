@@ -85,9 +85,9 @@ export function POSClient({
     ? clients.find(c => c.id === selectedDashboardClient.id) || selectedDashboardClient
     : null;
 
-  const activeOrderForSelected = currentClient
-    ? openOrders.find((o) => o.client_id === currentClient.id)
-    : null;
+  const activeOrdersForSelected = currentClient
+    ? openOrders.filter((o) => o.client_id === currentClient.id)
+    : [];
   const debtForSelected = currentClient ? Number(currentClient.total_debt) : 0;
 
   useEffect(() => {
@@ -138,19 +138,22 @@ export function POSClient({
 
   // ── HANDLERS ──────────────────────────────────────────────────────────────
 
-  const handleStartOrder = async (clientId: string | undefined) => {
-    if (loadingOrder) return;
+  const handleStartOrder = async (clientId?: string, forceNew: boolean = false) => {
     try {
       setLoadingOrder(true);
-      const order = await getOrCreateOrder(clientId);
-      const fullOrder = await getOrder(order.id);
-      setActiveOrder(fullOrder);
+      const newOrder = await getOrCreateOrder(clientId, forceNew);
+      setActiveOrder(newOrder);
       setScreen("ORDER_VIEW");
     } catch (e: any) {
-      toast.error("Erro ao abrir comanda: " + e.message);
+      toast.error("Erro ao iniciar comanda: " + e.message);
     } finally {
       setLoadingOrder(false);
     }
+  };
+
+  const handleLoadOrder = (order: any) => {
+    setActiveOrder(order);
+    setScreen("ORDER_VIEW");
   };
 
   const handleAddProduct = async (productId: string) => {
@@ -604,65 +607,71 @@ export function POSClient({
 
                 {/* Comanda Card */}
                 <div
-                  className="rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden"
-                  style={{ background: "#111A14", border: "1px solid #1E2E21" }}
+                  className="flex flex-col rounded-3xl p-6 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, #111A14 0%, #0C0F0A 100%)",
+                    border: "1px solid #1E2E21",
+                    height: "280px",
+                  }}
                 >
-                  <div
-                    className="absolute inset-0 rounded-2xl pointer-events-none"
-                    style={{ background: "radial-gradient(ellipse at top right, #00805A0A 0%, transparent 60%)" }}
-                  />
-
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2.5 rounded-xl" style={{ background: "#F59E0B20", color: "#F59E0B" }}>
-                      <BadgeDollarSign className="size-5" />
+                  <div className="flex items-center justify-between gap-2 mb-3 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
+                        <ClipboardList size={20} style={{ color: "#00805A" }} />
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-widest" style={{ color: "#7A9B82" }}>
+                        Comandas Abertas ({activeOrdersForSelected.length})
+                      </h3>
                     </div>
-                    <h3 className="text-xs font-black uppercase tracking-widest" style={{ color: "#7A9B82" }}>
-                      Comanda Atual
-                    </h3>
                   </div>
 
-                  {activeOrderForSelected ? (
-                    <>
-                      <div>
-                        <div className="text-5xl font-black tracking-tight" style={{ color: "#F59E0B" }}>
-                          {BRL(Number(activeOrderForSelected.total_amount))}
+                  {activeOrdersForSelected.length > 0 ? (
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-2 mb-3">
+                      {activeOrdersForSelected.map((order, idx) => (
+                        <div key={order.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "#162119", border: "1px solid #1E2E21" }}>
+                          <div>
+                            <p className="text-sm font-black" style={{ color: "#F59E0B" }}>{BRL(Number(order.total_amount))}</p>
+                            <p className="text-xs" style={{ color: "#7A9B82" }}>
+                              {order.items?.reduce((acc: number, i: any) => acc + i.quantity, 0) || 0} itens • {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleLoadOrder(order)}
+                            disabled={loadingOrder}
+                            className="px-4 py-2 rounded-lg font-bold text-xs transition-all active:scale-95"
+                            style={{ background: "#00805A", color: "#F4F6F3" }}
+                          >
+                            Continuar
+                          </button>
                         </div>
-                        <p className="text-sm mt-1.5 font-medium" style={{ color: "#7A9B82" }}>
-                          {activeOrderForSelected.items?.reduce((acc: number, i: any) => acc + i.quantity, 0) || 0} itens
-                          na comanda
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleStartOrder(currentClient.id)}
-                        disabled={loadingOrder}
-                        className="w-full h-14 mt-auto rounded-xl font-black text-base transition-all active:scale-95 disabled:opacity-50"
-                        style={{ background: "#00805A", color: "#F4F6F3", boxShadow: "0 4px 24px #00805A30" }}
-                      >
-                        {loadingOrder ? "Abrindo..." : "→ Continuar Comanda"}
-                      </button>
-                    </>
+                      ))}
+                    </div>
                   ) : (
-                    <>
-                      <div>
-                        <div className="text-5xl font-black tracking-tight" style={{ color: "#2d4a32" }}>
-                          R$ 0,00
-                        </div>
-                        <p className="text-sm mt-1.5 font-medium" style={{ color: "#3d5e42" }}>
-                          Sem comanda aberta
-                        </p>
+                    <div className="flex-1 flex flex-col justify-center mb-4">
+                      <div className="text-5xl font-black tracking-tight" style={{ color: "#2d4a32" }}>
+                        R$ 0,00
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleStartOrder(currentClient.id)}
-                        disabled={loadingOrder}
-                        className="w-full h-14 mt-auto rounded-xl font-black text-base transition-all active:scale-95 disabled:opacity-50"
-                        style={{ background: "#00805A", color: "#F4F6F3", boxShadow: "0 4px 24px #00805A30" }}
-                      >
-                        {loadingOrder ? "Abrindo..." : "+ Abrir Nova Comanda"}
-                      </button>
-                    </>
+                      <p className="text-sm mt-1.5 font-medium" style={{ color: "#3d5e42" }}>
+                        Sem comanda aberta
+                      </p>
+                    </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleStartOrder(currentClient.id, activeOrdersForSelected.length > 0)}
+                    disabled={loadingOrder}
+                    className="w-full h-12 shrink-0 rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50"
+                    style={{ 
+                      background: activeOrdersForSelected.length > 0 ? "#162119" : "#00805A", 
+                      color: activeOrdersForSelected.length > 0 ? "#7A9B82" : "#F4F6F3",
+                      border: activeOrdersForSelected.length > 0 ? "1px solid #1E2E21" : "none",
+                      boxShadow: activeOrdersForSelected.length === 0 ? "0 4px 24px #00805A30" : "none" 
+                    }}
+                  >
+                    {loadingOrder ? "Abrindo..." : "+ Criar Nova Comanda"}
+                  </button>
                 </div>
               </div>
             </div>

@@ -98,22 +98,26 @@ export async function getOpenOrders() {
 // Se o cliente já tem uma comanda aberta, retorna ela.
 // Se não tem, cria uma nova.
 // clientId = ID do cliente (opcional — vendas avulsas não têm cliente)
-export async function getOrCreateOrder(clientId?: string) {
+export async function getOrCreateOrder(clientId?: string, forceNew: boolean = false) {
   if (clientId) {
     // ── Com cliente identificado ──
-    // Procura se já existe uma comanda aberta para este cliente
-    let order = await prisma.order.findFirst({
-      where: { client_id: clientId, status: "OPEN" },
-      include: { items: { include: { product: true } }, client: true }
-    });
+    let order = null;
+    
+    // Se não estiver forçando nova, tenta encontrar uma aberta
+    if (!forceNew) {
+      order = await prisma.order.findFirst({
+        where: { client_id: clientId, status: "OPEN" },
+        include: { items: { include: { product: true } }, client: true }
+      });
+    }
 
-    // Se não encontrou, cria uma nova comanda zerada para o cliente
+    // Se não encontrou (ou se forceNew é true), cria uma nova comanda
     if (!order) {
       order = await prisma.order.create({
         data: {
-          client_id: clientId,  // Vincula ao cliente
-          status: "OPEN",       // Abre a comanda
-          total_amount: 0,      // Começa com total zero
+          client_id: clientId,
+          status: "OPEN",
+          total_amount: 0,
         },
         include: { items: { include: { product: true } }, client: true }
       });
@@ -122,18 +126,20 @@ export async function getOrCreateOrder(clientId?: string) {
 
   } else {
     // ── Venda avulsa (sem cliente) ──
-    // Procura uma comanda anônima vazia existente para reaproveitar
-    let order = await prisma.order.findFirst({
-      where: {
-        client_id: null,    // Sem cliente
-        status: "OPEN",     // Aberta
-        total_amount: 0,    // Vazia (total zero)
-      },
-      include: { items: { include: { product: true } }, client: true },
-      orderBy: { created_at: 'desc' }  // A mais recente primeiro
-    });
+    let order = null;
 
-    // Se não existe comanda vazia, cria uma nova
+    if (!forceNew) {
+      order = await prisma.order.findFirst({
+        where: {
+          client_id: null,
+          status: "OPEN",
+          total_amount: 0,
+        },
+        include: { items: { include: { product: true } }, client: true },
+        orderBy: { created_at: 'desc' }
+      });
+    }
+
     if (!order) {
       order = await prisma.order.create({
         data: { status: "OPEN", total_amount: 0 },
