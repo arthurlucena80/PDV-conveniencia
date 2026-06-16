@@ -443,7 +443,7 @@ export function POSClient({
         <section className="flex-1 overflow-y-auto" style={{ backgroundColor: "#0C0F0A" }}>
           {screen === "CLIENTS_VIEW" ? (
             <div className="flex-1 flex flex-col relative h-full">
-              <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
+              <div className="sticky top-0 z-20 p-4 md:p-6 flex flex-wrap items-center justify-between gap-4" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -458,7 +458,7 @@ export function POSClient({
                     <User className="size-6" style={{ color: "#00805A" }} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Clientes Cadastrados</h2>
+                  <h2 className="text-lg md:text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Clientes Cadastrados</h2>
                     <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>{filteredClients.length} clientes na base</p>
                   </div>
                 </div>
@@ -551,7 +551,7 @@ export function POSClient({
                     <Tag className="size-6" style={{ color: "#00805A" }} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Produtos Cadastrados</h2>
+                    <h2 className="text-lg md:text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Produtos Cadastrados</h2>
                     <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>Catálogo do Caderno PDV</p>
                   </div>
                 </div>
