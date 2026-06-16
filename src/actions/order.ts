@@ -26,6 +26,9 @@ import { revalidatePath } from "next/cache";
 // revalidatePath = função do Next.js que limpa o cache de uma página
 // Necessária para que a tela atualize após uma mudança no banco
 
+import { sendReceiptViaEvolution } from "@/lib/evolution";
+// Integração com WhatsApp para envio automático do recibo
+
 // ── Função Auxiliar: serializeOrder ──────────────────────────
 // PROBLEMA: O Prisma retorna valores monetários como "Decimal"
 // (um tipo especial de número). O Next.js não consegue passar
@@ -303,6 +306,27 @@ export async function closeOrder(
   revalidatePath("/admin");
   revalidatePath("/admin/clientes");
   revalidatePath("/admin/fiado");
+
+  // ── Envio de Recibo via WhatsApp (Evolution API) ──
+  // Busca o pedido completo para gerar o recibo
+  try {
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        client: true,
+        items: { include: { product: true } }
+      }
+    });
+
+    if (fullOrder && fullOrder.client && fullOrder.client.phone) {
+      // Dispara assincronamente (não usamos await para não travar o fechamento da tela)
+      sendReceiptViaEvolution(serializeOrder(fullOrder)).catch((err) => {
+        console.error("Erro no envio do whatsapp em background:", err);
+      });
+    }
+  } catch (error) {
+    console.error("Erro ao tentar disparar WhatsApp:", error);
+  }
 }
 
 // ── Função Interna: Recalcular Total ─────────────────────────
