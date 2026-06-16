@@ -249,7 +249,7 @@ export function POSClient({
   };
 
   // ── CLIENT SELECTION SCREEN ───────────────────────────────────────────────
-  if (screen === "CLIENT_SELECTION") {
+  if (screen === "CLIENT_SELECTION" || screen === "PRODUCTS_VIEW") {
     return (
       <main
         className="min-h-screen md:h-screen flex flex-col md:flex-row text-[#F4F6F3] md:overflow-hidden"
@@ -481,7 +481,9 @@ export function POSClient({
                       <ProductCard
                         key={p.id}
                         product={p}
+                        quantity={0}
                         onAdd={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
+                        onRemove={() => {}}
                         onEdit={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
                       />
                     ))}
