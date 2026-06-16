@@ -123,22 +123,6 @@ export function CheckoutDrawer({
             <p className="text-3xl font-black mb-4" style={{ color: "#00805A" }}>
               {BRL(finalTotal)}
             </p>
-            
-            {order?.client?.phone && (
-              <button
-                type="button"
-                onClick={() => {
-                  const text = formatReceiptText({ ...order, discount: discountValue });
-                  openWhatsApp(order.client.phone, text);
-                }}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-95"
-                style={{ background: "#25D366", color: "#FFFFFF", boxShadow: "0 4px 14px #25D36640" }}
-              >
-                <MessageCircle className="size-5" />
-                Enviar Comanda via WhatsApp
-              </button>
-            )}
-            
           </div>
         )}
 
@@ -220,6 +204,22 @@ export function CheckoutDrawer({
                 ))}
               </div>
             </div>
+
+            {/* WhatsApp Pre-charge */}
+            {order?.client?.phone && (
+              <button
+                type="button"
+                onClick={() => {
+                  const text = formatReceiptText({ ...order, discount: discountValue });
+                  openWhatsApp(order.client.phone, text);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm transition-all hover:brightness-110 active:scale-95"
+                style={{ background: "#25D36615", color: "#25D366", border: "1px solid #25D36630" }}
+              >
+                <MessageCircle className="size-5" />
+                Enviar Comanda via WhatsApp
+              </button>
+            )}
 
             {/* Payment Methods */}
             <div>
