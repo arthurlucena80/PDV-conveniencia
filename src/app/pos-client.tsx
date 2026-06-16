@@ -81,10 +81,14 @@ export function POSClient({
   const [productSearch, setProductSearch] = useState("");
 
   // Derived
-  const activeOrderForSelected = selectedDashboardClient
-    ? openOrders.find((o) => o.client_id === selectedDashboardClient.id)
+  const currentClient = selectedDashboardClient 
+    ? clients.find(c => c.id === selectedDashboardClient.id) || selectedDashboardClient
     : null;
-  const debtForSelected = selectedDashboardClient ? Number(selectedDashboardClient.total_debt) : 0;
+
+  const activeOrderForSelected = currentClient
+    ? openOrders.find((o) => o.client_id === currentClient.id)
+    : null;
+  const debtForSelected = currentClient ? Number(currentClient.total_debt) : 0;
 
   useEffect(() => {
     if (activeOrder?.items) {
@@ -191,11 +195,11 @@ export function POSClient({
   };
 
   const openEditClientModal = () => {
-    if (!selectedDashboardClient) return;
-    setClientFormId(selectedDashboardClient.id);
-    setClientFormName(selectedDashboardClient.name);
-    setClientFormPhone(selectedDashboardClient.phone || "");
-    setClientFormCpf(selectedDashboardClient.cpf || "");
+    if (!currentClient) return;
+    setClientFormId(currentClient.id);
+    setClientFormName(currentClient.name);
+    setClientFormPhone(currentClient.phone || "");
+    setClientFormCpf(currentClient.cpf || "");
     setIsClientModalOpen(true);
   };
 
@@ -219,7 +223,7 @@ export function POSClient({
   };
 
   const handlePayDebtClick = async () => {
-    if (!selectedDashboardClient) { toast.error("Selecione um cliente."); return; }
+    if (!currentClient) { toast.error("Selecione um cliente."); return; }
     const parsedValue = debtPaymentAmount.replace(",", ".");
     const amount = parseFloat(parsedValue);
     if (!debtPaymentAmount || isNaN(amount) || amount <= 0) {
@@ -230,7 +234,7 @@ export function POSClient({
     }
     try {
       setLoadingPayDebt(true);
-      await payDebt(selectedDashboardClient.id, amount);
+      await payDebt(currentClient.id, amount);
       toast.success("Pagamento registrado com sucesso!");
       setDebtPaymentAmount("");
       router.refresh();
@@ -350,7 +354,7 @@ export function POSClient({
               const orderAmount =
                 openOrders.find((o) => o.client_id === client.id)?.total_amount || 0;
               const debt = Number(client.total_debt);
-              const isSelected = selectedDashboardClient?.id === client.id;
+              const isSelected = currentClient?.id === client.id;
 
               return (
                 <div
@@ -403,7 +407,7 @@ export function POSClient({
 
         {/* ── Main Dashboard ── */}
         <section className="flex-1 overflow-y-auto" style={{ backgroundColor: "#0C0F0A" }}>
-          {selectedDashboardClient ? (
+          {currentClient ? (
             <div className="flex flex-col">
               {/* Client Header */}
               <div
@@ -418,21 +422,21 @@ export function POSClient({
                     className="size-12 rounded-xl flex items-center justify-center text-xl font-black shrink-0"
                     style={{ background: "#00805A20", border: "1px solid #00805A40", color: "#00805A" }}
                   >
-                    {selectedDashboardClient.name.charAt(0).toUpperCase()}
+                    {currentClient.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-2xl font-black tracking-tight truncate" style={{ color: "#F4F6F3" }}>
-                      {selectedDashboardClient.name}
+                      {currentClient.name}
                     </h2>
                     <div className="flex flex-wrap gap-3 mt-0.5">
-                      {selectedDashboardClient.phone && (
+                      {currentClient.phone && (
                         <span className="text-xs" style={{ color: "#7A9B82" }}>
-                          📞 {selectedDashboardClient.phone}
+                          📞 {currentClient.phone}
                         </span>
                       )}
-                      {selectedDashboardClient.cpf && (
+                      {currentClient.cpf && (
                         <span className="text-xs" style={{ color: "#7A9B82" }}>
-                          📄 {selectedDashboardClient.cpf}
+                          📄 {currentClient.cpf}
                         </span>
                       )}
                     </div>
@@ -601,7 +605,7 @@ export function POSClient({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleStartOrder(selectedDashboardClient.id)}
+                        onClick={() => handleStartOrder(currentClient.id)}
                         disabled={loadingOrder}
                         className="w-full h-14 mt-auto rounded-xl font-black text-base transition-all active:scale-95 disabled:opacity-50"
                         style={{ background: "#00805A", color: "#F4F6F3", boxShadow: "0 4px 24px #00805A30" }}
@@ -621,7 +625,7 @@ export function POSClient({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleStartOrder(selectedDashboardClient.id)}
+                        onClick={() => handleStartOrder(currentClient.id)}
                         disabled={loadingOrder}
                         className="w-full h-14 mt-auto rounded-xl font-black text-base transition-all active:scale-95 disabled:opacity-50"
                         style={{ background: "#00805A", color: "#F4F6F3", boxShadow: "0 4px 24px #00805A30" }}
@@ -710,13 +714,13 @@ export function POSClient({
           </DialogContent>
         </Dialog>
 
-        {selectedDashboardClient && (
+        {currentClient && (
           <DebtHistoryModal
             isOpen={isDebtHistoryOpen}
             onOpenChange={setIsDebtHistoryOpen}
-            clientId={selectedDashboardClient.id}
-            clientName={selectedDashboardClient.name}
-            clientPhone={selectedDashboardClient.phone}
+            clientId={currentClient.id}
+            clientName={currentClient.name}
+            clientPhone={currentClient.phone}
           />
         )}
 
