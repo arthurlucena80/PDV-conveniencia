@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Search, Wallet, Users, DollarSign, Phone, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { BookOpen } from "lucide-react";
+import { DebtHistoryModal } from "@/components/DebtHistoryModal";
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -28,6 +30,7 @@ export function FiadoClient({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [historyClient, setHistoryClient] = useState<Client | null>(null);
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
@@ -186,13 +189,24 @@ export function FiadoClient({
                       em aberto
                     </p>
                   </div>
-                  <button
-                    onClick={() => setPayingId(isExpanded ? null : client.id)}
-                    className="px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95"
-                    style={{ background: "#22C55E20", color: "#22C55E", border: "1px solid #22C55E30" }}
-                  >
-                    <Wallet size={14} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setHistoryClient(client)}
+                      className="px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95"
+                      style={{ background: "#4A7A5220", color: "#4A7A52", border: "1px solid #4A7A5230" }}
+                      title="Ver Caderninho"
+                    >
+                      <BookOpen size={14} />
+                    </button>
+                    <button
+                      onClick={() => setPayingId(isExpanded ? null : client.id)}
+                      className="px-4 py-2 rounded-xl font-black text-xs transition-all active:scale-95"
+                      style={{ background: "#22C55E20", color: "#22C55E", border: "1px solid #22C55E30" }}
+                      title="Registrar Pagamento"
+                    >
+                      <Wallet size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -271,6 +285,16 @@ export function FiadoClient({
           );
         })}
       </div>
+
+      {historyClient && (
+        <DebtHistoryModal
+          isOpen={!!historyClient}
+          onOpenChange={(open) => !open && setHistoryClient(null)}
+          clientId={historyClient.id}
+          clientName={historyClient.name}
+          clientPhone={historyClient.phone}
+        />
+      )}
     </div>
   );
 }
