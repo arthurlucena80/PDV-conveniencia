@@ -359,7 +359,9 @@ export function POSClient({
                   className="flex justify-between items-center px-3.5 py-3 rounded-xl cursor-pointer transition-all"
                   style={{
                     background: isSelected ? "#162119" : "#0C0F0A",
-                    border: isSelected ? "1px solid #00805A80" : "1px solid #1E2E21",
+                    borderTop: isSelected ? "1px solid #00805A80" : "1px solid #1E2E21",
+                    borderRight: isSelected ? "1px solid #00805A80" : "1px solid #1E2E21",
+                    borderBottom: isSelected ? "1px solid #00805A80" : "1px solid #1E2E21",
                     borderLeft: debt > 0
                       ? "3px solid #E53935"
                       : isSelected
