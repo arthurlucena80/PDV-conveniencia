@@ -445,7 +445,16 @@ export function POSClient({
             <div className="flex-1 flex flex-col relative h-full">
               <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
+                  <button
+                    type="button"
+                    onClick={() => setScreen("CLIENT_SELECTION")}
+                    className="flex size-10 items-center justify-center rounded-xl transition-all active:scale-95 shrink-0"
+                    style={{ background: "#162119", border: "1px solid #1E2E21", color: "#7A9B82" }}
+                    title="Voltar"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </button>
+                  <div className="hidden sm:flex p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
                     <Tag className="size-6" style={{ color: "#00805A" }} />
                   </div>
                   <div>
