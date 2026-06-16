@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-type ScreenState = "CLIENT_SELECTION" | "ORDER_VIEW" | "PRODUCTS_VIEW";
+type ScreenState = "CLIENT_SELECTION" | "ORDER_VIEW" | "PRODUCTS_VIEW" | "CLIENTS_VIEW";
 
 type Category = { id: string; name: string; icon?: string; color?: string };
 
@@ -249,7 +249,7 @@ export function POSClient({
   };
 
   // ── CLIENT SELECTION SCREEN ───────────────────────────────────────────────
-  if (screen === "CLIENT_SELECTION" || screen === "PRODUCTS_VIEW") {
+  if (screen === "CLIENT_SELECTION" || screen === "PRODUCTS_VIEW" || screen === "CLIENTS_VIEW") {
     return (
       <main
         className="min-h-screen md:h-screen flex flex-col md:flex-row text-[#F4F6F3] md:overflow-hidden"
@@ -320,12 +320,12 @@ export function POSClient({
               </button>
               <button
                 type="button"
-                onClick={openNewClientModal}
+                onClick={() => { setSelectedDashboardClient(null); setScreen("CLIENTS_VIEW"); }}
                 className="flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 hover:brightness-110"
                 style={{ background: "#162119", border: "1px solid #1E2E21", color: "#F4F6F3" }}
               >
                 <User className="size-5" />
-                Cliente
+                Clientes
               </button>
               <button
                 type="button"
@@ -352,7 +352,7 @@ export function POSClient({
               <BarChart3 size={12} /> Admin
             </a>
           </div>
-          <div className="flex-1 md:overflow-y-auto px-4 pb-4 space-y-1.5" style={{ display: screen === "PRODUCTS_VIEW" ? "none" : "block" }}>
+          <div className="flex-1 md:overflow-y-auto px-4 pb-4 space-y-1.5" style={{ display: screen === "PRODUCTS_VIEW" || screen === "CLIENTS_VIEW" ? "none" : "block" }}>
             {filteredClients.map((client) => {
               const orderAmount =
                 openOrders.find((o) => o.client_id === client.id)?.total_amount || 0;
@@ -441,7 +441,100 @@ export function POSClient({
 
         {/* ── Main Dashboard ── */}
         <section className="flex-1 overflow-y-auto" style={{ backgroundColor: "#0C0F0A" }}>
-          {screen === "PRODUCTS_VIEW" ? (
+          {screen === "CLIENTS_VIEW" ? (
+            <div className="flex-1 flex flex-col relative h-full">
+              <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScreen("CLIENT_SELECTION")}
+                    className="flex size-10 items-center justify-center rounded-xl transition-all active:scale-95 shrink-0"
+                    style={{ background: "#162119", border: "1px solid #1E2E21", color: "#7A9B82" }}
+                    title="Voltar"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </button>
+                  <div className="hidden sm:flex p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
+                    <User className="size-6" style={{ color: "#00805A" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Clientes Cadastrados</h2>
+                    <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>{filteredClients.length} clientes na base</p>
+                  </div>
+                </div>
+                <button
+                  onClick={openNewClientModal}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ background: "#00805A", color: "#FFF", boxShadow: "0 4px 20px #00805A40" }}
+                >
+                  <Plus size={18} strokeWidth={3} /> Novo Cliente
+                </button>
+              </div>
+              
+              <div className="flex-1 p-6 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredClients.map((client) => {
+                    const orderAmount = openOrders.find((o) => o.client_id === client.id)?.total_amount || 0;
+                    const debt = Number(client.total_debt);
+                    return (
+                      <div
+                        key={client.id}
+                        onClick={() => { setSelectedDashboardClient(client); setScreen("CLIENT_SELECTION"); }}
+                        className="group relative flex flex-col justify-between p-5 rounded-2xl cursor-pointer transition-all hover:-translate-y-1"
+                        style={{
+                          background: "#162119",
+                          border: debt > 0 ? "1px solid #E5393550" : "1px solid #1E2E21",
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div
+                            className="size-12 rounded-xl flex items-center justify-center text-xl font-black shrink-0"
+                            style={{ background: "#00805A20", color: "#00805A" }}
+                          >
+                            {client.name.charAt(0).toUpperCase()}
+                          </div>
+                          {debt > 0 && (
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ background: "#E5393520", color: "#E53935" }}>
+                              Fiado: {BRL(debt)}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg truncate mb-1" style={{ color: "#F4F6F3" }}>
+                            {client.name}
+                          </h3>
+                          <div className="flex items-center gap-2 text-xs" style={{ color: "#7A9B82" }}>
+                            {client.phone && <span>{client.phone}</span>}
+                            {client.cpf && <span>• {client.cpf}</span>}
+                            {!client.phone && !client.cpf && <span>Sem contato</span>}
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); handleStartOrder(client.id, orderAmount > 0); }}
+                             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all hover:brightness-110 flex items-center justify-center gap-1.5"
+                             style={{ background: '#00805A', color: '#FFF' }}
+                           >
+                             <Plus size={14} /> Comanda
+                           </button>
+                           {debt > 0 && (
+                             <button
+                               onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); setScreen("CLIENT_SELECTION"); }}
+                               className="flex-1 py-2 rounded-lg text-xs font-bold transition-all hover:brightness-110 flex items-center justify-center gap-1.5"
+                               style={{ background: '#E5393515', color: '#E53935', border: '1px solid #E5393540' }}
+                             >
+                               <Wallet size={14} /> Receber
+                             </button>
+                           )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : screen === "PRODUCTS_VIEW" ? (
             <div className="flex-1 flex flex-col relative h-full">
               <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
                 <div className="flex items-center gap-3">
