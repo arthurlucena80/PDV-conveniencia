@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-type ScreenState = "CLIENT_SELECTION" | "ORDER_VIEW";
+type ScreenState = "CLIENT_SELECTION" | "ORDER_VIEW" | "PRODUCTS_VIEW";
 
 type Category = { id: string; name: string; icon?: string; color?: string };
 
@@ -329,15 +329,66 @@ export function POSClient({
               </button>
               <button
                 type="button"
-                onClick={() => { setSelectedProduct(null); setIsProductModalOpen(true); }}
+                onClick={() => { setSelectedDashboardClient(null); setScreen("PRODUCTS_VIEW"); }}
                 className="flex flex-col items-center gap-1.5 py-3 rounded-xl font-bold text-xs transition-all active:scale-95 hover:brightness-110"
                 style={{ background: "#162119", border: "1px solid #1E2E21", color: "#F4F6F3" }}
               >
-                <Plus className="size-5" />
-                Produto
+                <Tag className="size-5" />
+                Produtos
               </button>
             </div>
           </div>
+
+          {/* Products View State */}
+          {screen === "PRODUCTS_VIEW" && (
+            <section className="flex-1 overflow-y-auto flex flex-col relative" style={{ backgroundColor: "#0C0F0A" }}>
+              <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
+                    <Tag className="size-6" style={{ color: "#00805A" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Produtos Cadastrados</h2>
+                    <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>Catálogo do Caderno PDV</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setSelectedProduct(null); setIsProductModalOpen(true); }}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ background: "#00805A", color: "#FFF", boxShadow: "0 4px 20px #00805A40" }}
+                >
+                  <Plus size={18} strokeWidth={3} /> Novo Produto
+                </button>
+              </div>
+              
+              <div className="flex-1 p-6">
+                {initialProducts.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center p-8 text-center" style={{ color: "#3d5e42" }}>
+                    <div className="p-6 rounded-3xl mb-6" style={{ background: "#111A14", border: "1px solid #1E2E21" }}>
+                      <Tag className="size-16" style={{ color: "#1E2E21" }} />
+                    </div>
+                    <h2 className="text-2xl font-black mb-2" style={{ color: "#7A9B82" }}>
+                      Nenhum produto cadastrado
+                    </h2>
+                    <p className="max-w-xs text-sm font-medium">
+                      Clique no botão "Novo Produto" acima para começar a adicionar itens ao seu caderno.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {initialProducts.map(p => (
+                      <ProductCard
+                        key={p.id}
+                        product={p}
+                        onAdd={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
+                        onEdit={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Client List */}
           <div className="px-4 pt-3 pb-2 flex items-center justify-between">
@@ -407,27 +458,29 @@ export function POSClient({
 
                   {/* Hover Actions */}
                   <div 
-                    className="absolute inset-y-0 right-0 hidden md:flex items-center justify-end pr-3 pl-16 gap-2 opacity-0 md:group-hover:opacity-100 transition-all pointer-events-none md:group-hover:pointer-events-auto z-20" 
+                    className="absolute inset-y-0 right-0 hidden md:flex items-center justify-end pr-3 pl-8 gap-1.5 opacity-0 md:group-hover:opacity-100 transition-all pointer-events-none md:group-hover:pointer-events-auto z-20" 
                     style={{ 
                       background: isSelected 
-                        ? 'linear-gradient(to right, transparent, #162119 25%, #162119 100%)' 
-                        : 'linear-gradient(to right, transparent, #0C0F0A 25%, #0C0F0A 100%)' 
+                        ? 'linear-gradient(to right, transparent, #162119 30%, #162119 100%)' 
+                        : 'linear-gradient(to right, transparent, #0C0F0A 30%, #0C0F0A 100%)' 
                     }}
                   >
                     <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); handleStartOrder(client.id); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all hover:scale-105 active:scale-95"
+                      onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); handleStartOrder(client.id, activeOrdersForSelected.length > 0); }}
+                      className="p-2.5 rounded-lg transition-all hover:scale-105 active:scale-95"
                       style={{ background: '#00805A', color: '#FFF', boxShadow: '0 4px 12px #00805A40' }}
+                      title="Nova Comanda"
                     >
-                      <Plus size={14} /> Comanda
+                      <Plus size={16} />
                     </button>
                     {debt > 0 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all hover:scale-105 active:scale-95"
+                        className="p-2.5 rounded-lg transition-all hover:scale-105 active:scale-95"
                         style={{ background: '#E5393515', color: '#E53935', border: '1px solid #E5393540' }}
+                        title="Receber Fiado"
                       >
-                        <Wallet size={14} /> Receber
+                        <Wallet size={16} />
                       </button>
                     )}
                   </div>
