@@ -373,23 +373,25 @@ export function POSClient({
                       : "3px solid #1E2E21",
                   }}
                 >
-                  <div className="min-w-0 transition-opacity md:group-hover:opacity-10">
+                  <div className="min-w-0 flex-1 relative z-10">
                     <h3 className="font-bold text-sm truncate" style={{ color: "#F4F6F3" }}>
                       {client.name}
                     </h3>
-                    {debt > 0 ? (
-                      <p className="text-xs font-semibold mt-0.5" style={{ color: "#E53935" }}>
-                        Fiado: {BRL(debt)}
-                      </p>
-                    ) : (
-                      <p className="text-xs mt-0.5" style={{ color: "#7A9B82" }}>
-                        ✓ Conta limpa
-                      </p>
-                    )}
+                    <div className="transition-opacity md:group-hover:opacity-0">
+                      {debt > 0 ? (
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: "#E53935" }}>
+                          Fiado: {BRL(debt)}
+                        </p>
+                      ) : (
+                        <p className="text-xs mt-0.5" style={{ color: "#7A9B82" }}>
+                          ✓ Conta limpa
+                        </p>
+                      )}
+                    </div>
                   </div>
                   {Number(orderAmount) > 0 && (
                     <span
-                      className="transition-opacity md:group-hover:opacity-10 text-xs font-bold ml-2 shrink-0 px-2 py-1 rounded-lg"
+                      className="transition-opacity md:group-hover:opacity-0 text-xs font-bold ml-2 shrink-0 px-2 py-1 rounded-lg relative z-10"
                       style={{
                         color: "#F59E0B",
                         background: "#F59E0B18",
@@ -402,8 +404,12 @@ export function POSClient({
 
                   {/* Hover Actions */}
                   <div 
-                    className="absolute inset-0 hidden md:flex items-center justify-center gap-2 opacity-0 md:group-hover:opacity-100 transition-all pointer-events-none md:group-hover:pointer-events-auto" 
-                    style={{ background: isSelected ? '#162119E6' : '#0C0F0AE6', backdropFilter: 'blur(2px)' }}
+                    className="absolute inset-y-0 right-0 hidden md:flex items-center justify-end pr-3 pl-16 gap-2 opacity-0 md:group-hover:opacity-100 transition-all pointer-events-none md:group-hover:pointer-events-auto z-20" 
+                    style={{ 
+                      background: isSelected 
+                        ? 'linear-gradient(to right, transparent, #162119 25%, #162119 100%)' 
+                        : 'linear-gradient(to right, transparent, #0C0F0A 25%, #0C0F0A 100%)' 
+                    }}
                   >
                     <button
                       onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); handleStartOrder(client.id); }}
