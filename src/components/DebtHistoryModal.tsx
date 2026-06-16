@@ -100,7 +100,7 @@ export function DebtHistoryModal({ isOpen, onOpenChange, clientId, clientName, c
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-sm font-bold truncate" style={{ color: '#F4F6F3' }}>
+                      <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: '#F4F6F3' }}>
                         {isPayment ? 'Pagamento' : 'Compra Fiado'}
                       </span>
                       <span className="text-sm font-black font-money shrink-0" style={{ color: isPayment ? '#22C55E' : '#F4F6F3' }}>
@@ -108,8 +108,8 @@ export function DebtHistoryModal({ isOpen, onOpenChange, clientId, clientName, c
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-0.5 gap-2">
-                      <p className="text-xs truncate" style={{ color: '#7A9B82' }}>{item.details}</p>
-                      <span className="text-xs font-mono shrink-0" style={{ color: '#3d5e42' }}>
+                      <p className="flex-1 min-w-0 text-xs truncate" style={{ color: '#7A9B82' }}>{item.details}</p>
+                      <span className="shrink-0 text-xs font-mono" style={{ color: '#3d5e42' }}>
                         {item.date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} {item.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
