@@ -339,57 +339,6 @@ export function POSClient({
             </div>
           </div>
 
-          {/* Products View State */}
-          {screen === "PRODUCTS_VIEW" && (
-            <section className="flex-1 overflow-y-auto flex flex-col relative" style={{ backgroundColor: "#0C0F0A" }}>
-              <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
-                    <Tag className="size-6" style={{ color: "#00805A" }} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Produtos Cadastrados</h2>
-                    <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>Catálogo do Caderno PDV</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setSelectedProduct(null); setIsProductModalOpen(true); }}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg"
-                  style={{ background: "#00805A", color: "#FFF", boxShadow: "0 4px 20px #00805A40" }}
-                >
-                  <Plus size={18} strokeWidth={3} /> Novo Produto
-                </button>
-              </div>
-              
-              <div className="flex-1 p-6">
-                {initialProducts.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center p-8 text-center" style={{ color: "#3d5e42" }}>
-                    <div className="p-6 rounded-3xl mb-6" style={{ background: "#111A14", border: "1px solid #1E2E21" }}>
-                      <Tag className="size-16" style={{ color: "#1E2E21" }} />
-                    </div>
-                    <h2 className="text-2xl font-black mb-2" style={{ color: "#7A9B82" }}>
-                      Nenhum produto cadastrado
-                    </h2>
-                    <p className="max-w-xs text-sm font-medium">
-                      Clique no botão "Novo Produto" acima para começar a adicionar itens ao seu caderno.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {initialProducts.map(p => (
-                      <ProductCard
-                        key={p.id}
-                        product={p}
-                        onAdd={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
-                        onEdit={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
           {/* Client List */}
           <div className="px-4 pt-3 pb-2 flex items-center justify-between">
             <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#7A9B82" }}>
@@ -403,7 +352,7 @@ export function POSClient({
               <BarChart3 size={12} /> Admin
             </a>
           </div>
-          <div className="flex-1 md:overflow-y-auto px-4 pb-4 space-y-1.5">
+          <div className="flex-1 md:overflow-y-auto px-4 pb-4 space-y-1.5" style={{ display: screen === "PRODUCTS_VIEW" ? "none" : "block" }}>
             {filteredClients.map((client) => {
               const orderAmount =
                 openOrders.find((o) => o.client_id === client.id)?.total_amount || 0;
@@ -413,7 +362,7 @@ export function POSClient({
               return (
                 <div
                   key={client.id}
-                  onClick={() => setSelectedDashboardClient(client)}
+                  onClick={() => { setSelectedDashboardClient(client); setScreen("CLIENT_SELECTION"); }}
                   className="group relative flex justify-between items-center px-3.5 py-3 rounded-xl cursor-pointer transition-all overflow-hidden"
                   style={{
                     background: isSelected ? "#162119" : "#0C0F0A",
@@ -492,7 +441,55 @@ export function POSClient({
 
         {/* ── Main Dashboard ── */}
         <section className="flex-1 overflow-y-auto" style={{ backgroundColor: "#0C0F0A" }}>
-          {currentClient ? (
+          {screen === "PRODUCTS_VIEW" ? (
+            <div className="flex-1 flex flex-col relative h-full">
+              <div className="sticky top-0 z-20 p-6 flex items-center justify-between" style={{ backgroundColor: "#111A14", borderBottom: "1px solid #1E2E21" }}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl" style={{ background: "#00805A20" }}>
+                    <Tag className="size-6" style={{ color: "#00805A" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight" style={{ color: "#F4F6F3" }}>Produtos Cadastrados</h2>
+                    <p className="text-sm font-medium mt-0.5" style={{ color: "#7A9B82" }}>Catálogo do Caderno PDV</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setSelectedProduct(null); setIsProductModalOpen(true); }}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ background: "#00805A", color: "#FFF", boxShadow: "0 4px 20px #00805A40" }}
+                >
+                  <Plus size={18} strokeWidth={3} /> Novo Produto
+                </button>
+              </div>
+              
+              <div className="flex-1 p-6">
+                {initialProducts.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center p-8 text-center" style={{ color: "#3d5e42" }}>
+                    <div className="p-6 rounded-3xl mb-6" style={{ background: "#111A14", border: "1px solid #1E2E21" }}>
+                      <Tag className="size-16" style={{ color: "#1E2E21" }} />
+                    </div>
+                    <h2 className="text-2xl font-black mb-2" style={{ color: "#7A9B82" }}>
+                      Nenhum produto cadastrado
+                    </h2>
+                    <p className="max-w-xs text-sm font-medium">
+                      Clique no botão "Novo Produto" acima para começar a adicionar itens ao seu caderno.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {initialProducts.map(p => (
+                      <ProductCard
+                        key={p.id}
+                        product={p}
+                        onAdd={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
+                        onEdit={() => { setSelectedProduct(p); setIsProductModalOpen(true); }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : currentClient ? (
             <div className="flex flex-col">
               {/* Client Header */}
               <div
