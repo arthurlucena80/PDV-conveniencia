@@ -12,11 +12,13 @@ interface ProductFormModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   product?: any;
+  categories: { id: string; name: string }[];
 }
 
-export function ProductFormModal({ isOpen, onOpenChange, product }: ProductFormModalProps) {
+export function ProductFormModal({ isOpen, onOpenChange, product, categories }: ProductFormModalProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -26,6 +28,7 @@ export function ProductFormModal({ isOpen, onOpenChange, product }: ProductFormM
     if (isOpen) {
       setName(product?.name || "");
       setPrice(product?.price?.toString() || "");
+      setCategoryId(product?.category_id || "");
       setImageUrl(product?.image_url || "");
       setImagePreview(product?.image_url || "");
     }
@@ -48,11 +51,17 @@ export function ProductFormModal({ isOpen, onOpenChange, product }: ProductFormM
     if (!name || !price) return;
     startTransition(async () => {
       try {
+        const payload = { 
+          name, 
+          price: parseFloat(price), 
+          image_url: imageUrl,
+          category_id: categoryId || undefined 
+        };
         if (product) {
-          await updateProduct(product.id, { name, price: parseFloat(price), image_url: imageUrl });
+          await updateProduct(product.id, payload);
           toast.success("Produto atualizado!");
         } else {
-          await createProduct({ name, price: parseFloat(price), image_url: imageUrl });
+          await createProduct(payload);
           toast.success("Produto cadastrado!");
         }
         onOpenChange(false);
@@ -139,6 +148,22 @@ export function ProductFormModal({ isOpen, onOpenChange, product }: ProductFormM
                 style={{ background: '#0C0F0A', border: '1px solid #1E2E21', color: '#F4F6F3' }}
               />
             </div>
+          </div>
+
+          {/* Category */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#7A9B82' }}>Categoria</Label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full h-12 rounded-xl text-sm px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00805A]"
+              style={{ background: '#0C0F0A', border: '1px solid #1E2E21', color: '#F4F6F3' }}
+            >
+              <option value="">Sem categoria</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Actions */}

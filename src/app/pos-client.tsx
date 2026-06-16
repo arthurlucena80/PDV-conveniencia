@@ -360,7 +360,7 @@ export function POSClient({
                 <div
                   key={client.id}
                   onClick={() => setSelectedDashboardClient(client)}
-                  className="flex justify-between items-center px-3.5 py-3 rounded-xl cursor-pointer transition-all"
+                  className="group relative flex justify-between items-center px-3.5 py-3 rounded-xl cursor-pointer transition-all overflow-hidden"
                   style={{
                     background: isSelected ? "#162119" : "#0C0F0A",
                     borderTop: isSelected ? "1px solid #00805A80" : "1px solid #1E2E21",
@@ -373,7 +373,7 @@ export function POSClient({
                       : "3px solid #1E2E21",
                   }}
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 transition-opacity group-hover:opacity-10">
                     <h3 className="font-bold text-sm truncate" style={{ color: "#F4F6F3" }}>
                       {client.name}
                     </h3>
@@ -389,7 +389,7 @@ export function POSClient({
                   </div>
                   {Number(orderAmount) > 0 && (
                     <span
-                      className="text-xs font-bold ml-2 shrink-0 px-2 py-1 rounded-lg"
+                      className="transition-opacity group-hover:opacity-10 text-xs font-bold ml-2 shrink-0 px-2 py-1 rounded-lg"
                       style={{
                         color: "#F59E0B",
                         background: "#F59E0B18",
@@ -399,6 +399,29 @@ export function POSClient({
                       {BRL(Number(orderAmount))}
                     </span>
                   )}
+
+                  {/* Hover Actions */}
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none group-hover:pointer-events-auto" 
+                    style={{ background: isSelected ? '#162119E6' : '#0C0F0AE6', backdropFilter: 'blur(2px)' }}
+                  >
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); handleStartOrder(client.id); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all hover:scale-105 active:scale-95"
+                      style={{ background: '#00805A', color: '#FFF', boxShadow: '0 4px 12px #00805A40' }}
+                    >
+                      <Plus size={14} /> Comanda
+                    </button>
+                    {debt > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedDashboardClient(client); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all hover:scale-105 active:scale-95"
+                        style={{ background: '#E5393515', color: '#E53935', border: '1px solid #E5393540' }}
+                      >
+                        <Wallet size={14} /> Receber
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -728,6 +751,7 @@ export function POSClient({
           isOpen={isProductModalOpen}
           onOpenChange={(open) => { setIsProductModalOpen(open); if (!open) { setSelectedProduct(null); router.refresh(); } }}
           product={selectedProduct}
+          categories={categories}
         />
       </main>
     );
@@ -878,6 +902,7 @@ export function POSClient({
           isOpen={isProductModalOpen}
           onOpenChange={(open) => { setIsProductModalOpen(open); if (!open) { setSelectedProduct(null); router.refresh(); } }}
           product={selectedProduct}
+          categories={categories}
         />
       </main>
     );
