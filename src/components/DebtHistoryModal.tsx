@@ -3,16 +3,18 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState, useTransition } from "react";
 import { getClientHistory } from "@/actions/client";
-import { Loader2, ArrowUpRight, ArrowDownLeft, BookOpen } from "lucide-react";
+import { Loader2, ArrowUpRight, ArrowDownLeft, BookOpen, MessageCircle } from "lucide-react";
+import { formatDebtText, openWhatsApp } from "@/lib/whatsapp";
 
 interface DebtHistoryModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
   clientName: string;
+  clientPhone?: string;
 }
 
-export function DebtHistoryModal({ isOpen, onOpenChange, clientId, clientName }: DebtHistoryModalProps) {
+export function DebtHistoryModal({ isOpen, onOpenChange, clientId, clientName, clientPhone }: DebtHistoryModalProps) {
   const [history, setHistory] = useState<{ orders: any[]; payments: any[] }>({ orders: [], payments: [] });
   const [isPending, startTransition] = useTransition();
 
@@ -119,7 +121,21 @@ export function DebtHistoryModal({ isOpen, onOpenChange, clientId, clientName }:
         </div>
 
         {/* Footer — receipt bottom */}
-        <div className="px-6 py-4 text-center" style={{ borderTop: '2px dashed #1E2E21' }}>
+        <div className="px-6 py-4 flex flex-col items-center gap-3" style={{ borderTop: '2px dashed #1E2E21' }}>
+          {clientPhone && totalDebt > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const text = formatDebtText(clientName, totalDebt);
+                openWhatsApp(clientPhone, text);
+              }}
+              className="flex items-center gap-2 px-6 py-2.5 w-full justify-center rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-95"
+              style={{ background: "#25D366", color: "#FFFFFF", boxShadow: "0 4px 14px #25D36640" }}
+            >
+              <MessageCircle className="size-4" />
+              Lembrar via WhatsApp
+            </button>
+          )}
           <p className="text-xs font-mono" style={{ color: '#3d5e42' }}>Caderno PDV • {new Date().toLocaleDateString('pt-BR')}</p>
         </div>
       </DialogContent>

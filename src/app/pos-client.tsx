@@ -250,8 +250,8 @@ export function POSClient({
       >
         {/* ── Sidebar ── */}
         <aside
-          className="w-full md:w-[320px] md:flex-shrink-0 flex flex-col"
-          style={{ backgroundColor: "#111A14", borderRight: "1px solid #1E2E21" }}
+          className="w-full md:w-[320px] md:flex-shrink-0 flex flex-col z-10"
+          style={{ backgroundColor: "#111A14CC", backdropFilter: "blur(24px)", borderRight: "1px solid #1E2E21" }}
         >
           {/* Brand Header — Cabeçalho com logo e botão de voltar */}
           <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid #1E2E21" }}>
@@ -714,6 +714,7 @@ export function POSClient({
             onOpenChange={setIsDebtHistoryOpen}
             clientId={selectedDashboardClient.id}
             clientName={selectedDashboardClient.name}
+            clientPhone={selectedDashboardClient.phone}
           />
         )}
 
@@ -732,8 +733,8 @@ export function POSClient({
     return (
       <main className="h-screen flex flex-col text-[#F4F6F3]" style={{ backgroundColor: "#0C0F0A" }}>
         <header
-          className="flex-shrink-0 px-4 md:px-6 py-4 space-y-3"
-          style={{ borderBottom: "1px solid #1E2E21", background: "#111A14" }}
+          className="flex-shrink-0 px-4 md:px-6 py-4 space-y-3 sticky top-0 z-20"
+          style={{ borderBottom: "1px solid #1E2E21", background: "#111A14CC", backdropFilter: "blur(24px)" }}
         >
           {/* Top row */}
           <div className="flex items-center justify-between gap-4">
@@ -864,6 +865,7 @@ export function POSClient({
               setProductSearch("");
               setActiveCategory("all");
             }}
+            order={activeOrder}
           />
         )}
         <ProductFormModal
