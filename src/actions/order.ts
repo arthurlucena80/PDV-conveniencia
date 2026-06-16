@@ -217,8 +217,8 @@ export async function addOrderItems(
 // orderId = ID da comanda
 // orderItemId = ID do item a remover
 export async function removeOrderItem(orderId: string, orderItemId: string) {
-  // Deleta o item do banco
-  await prisma.orderItem.delete({
+  // Deleta o item do banco (usa deleteMany para não quebrar se o item já foi removido)
+  await prisma.orderItem.deleteMany({
     where: { id: orderItemId },
   });
 
