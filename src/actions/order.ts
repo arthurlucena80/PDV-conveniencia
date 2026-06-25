@@ -248,7 +248,10 @@ export async function closeOrder(
   orderId: string,
   paymentMethod: PaymentMethod,
   clientId?: string,
-  discount = 0
+  discount = 0,
+  sendWhatsapp: boolean = false,
+  whatsappPhone?: string,
+  paymentNotes?: string
 ) {
   // Busca a comanda atual no banco
   const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -283,6 +286,7 @@ export async function closeOrder(
           client_id: finalClientId,
           discount,    // Registra o desconto dado
           closed_at: now,  // Data/hora do fechamento
+          notes: paymentNotes ? (order.notes ? `${order.notes} | ${paymentNotes}` : paymentNotes) : order.notes,
         },
       }),
       // 2. Soma o valor ao saldo devedor do cliente
@@ -303,6 +307,7 @@ export async function closeOrder(
         client_id: finalClientId,
         discount,
         closed_at: now,
+        notes: paymentNotes ? (order.notes ? `${order.notes} | ${paymentNotes}` : paymentNotes) : order.notes,
       },
     });
   }
@@ -324,11 +329,14 @@ export async function closeOrder(
       }
     });
 
-    if (fullOrder && fullOrder.client && fullOrder.client.phone) {
-      // Dispara assincronamente (não usamos await para não travar o fechamento da tela)
-      sendReceiptViaEvolution(serializeOrder(fullOrder)).catch((err) => {
-        console.error("Erro no envio do whatsapp em background:", err);
-      });
+    if (fullOrder && sendWhatsapp) {
+      const finalPhone = whatsappPhone || (fullOrder.client && fullOrder.client.phone);
+      if (finalPhone) {
+        // Mock ou chamada real para a Evolution API (agora repassando o telefone correto)
+        sendReceiptViaEvolution(serializeOrder(fullOrder), finalPhone).catch((err) => {
+          console.error("Erro no envio do whatsapp em background:", err);
+        });
+      }
     }
   } catch (error) {
     console.error("Erro ao tentar disparar WhatsApp:", error);
@@ -358,4 +366,45 @@ async function recalculateOrderTotal(orderId: string) {
     where: { id: orderId },
     data: { total_amount: total },
   });
+}
+
+// ── Atualizar Observações (Nome da Comanda/Mesa) ──────────────
+export async function updateOrderNotes(orderId: string, notes: string) {
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { notes }
+  });
+  revalidatePath("/");
+}
+
+// ── Excluir Comanda Aberta ────────────────────────────────────
+export async function deleteOrder(orderId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return;
+  if (order.status !== "OPEN") {
+    throw new Error("Apenas comandas abertas podem ser excluídas.");
+  }
+  
+  // Deleta a comanda (onDelete: Cascade irá deletar os itens dela)
+  await prisma.order.delete({ where: { id: orderId } });
+  revalidatePath("/");
+}
+
+// ── Histórico de Vendas (Comandas Fechadas) ───────────────────
+export async function getClosedOrders() {
+  const orders = await prisma.order.findMany({
+    where: {
+      status: { in: ["PAID", "UNPAID"] }
+    },
+    include: {
+      client: true,
+      items: {
+        include: { product: true }
+      }
+    },
+    orderBy: { closed_at: "desc" },
+    take: 100 // Traz as últimas 100 vendas por segurança
+  });
+
+  return orders.map(serializeOrder);
 }

@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Aumenta o limite de upload para suportar fotos maiores (base64)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;

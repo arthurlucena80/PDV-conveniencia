@@ -1,15 +1,17 @@
 import { getActiveProducts } from "@/actions/product";
-import { getOpenOrders } from "@/actions/order";
+import { getOpenOrders, getClosedOrders } from "@/actions/order";
 import { getClients } from "@/actions/client";
 import { getCategories } from "@/actions/category";
 import { POSClient } from "./pos-client";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function POSPage() {
-  const [products, openOrders, clients, categories] = await Promise.all([
+  const [products, openOrders, closedOrders, clients, categories] = await Promise.all([
     getActiveProducts(),
     getOpenOrders(),
+    getClosedOrders(),
     getClients(),
     getCategories(),
   ]);
@@ -55,6 +57,7 @@ export default async function POSPage() {
     <POSClient
       initialProducts={serializedProducts}
       openOrders={serializedOpenOrders}
+      closedOrders={closedOrders}
       clients={serializedClients}
       categories={categories}
     />

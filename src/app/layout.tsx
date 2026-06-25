@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Sora, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { Chatbot } from '@/components/Chatbot'
 
 const sora = Sora({ 
   variable: '--font-sora', 
@@ -38,6 +39,7 @@ export default function RootLayout({
           richColors
         />
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        <Chatbot />
       </body>
     </html>
   )

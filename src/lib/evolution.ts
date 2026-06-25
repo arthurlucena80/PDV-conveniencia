@@ -64,14 +64,16 @@ export async function sendEvolutionMessage(phone: string, text: string) {
 /**
  * Utilitário para enviar um recibo da comanda automaticamente
  */
-export async function sendReceiptViaEvolution(order: any) {
-  // Se for venda avulsa sem cliente, não tem como enviar
-  if (!order.client || !order.client.phone) {
+export async function sendReceiptViaEvolution(order: any, phoneOverride?: string) {
+  const targetPhone = phoneOverride || (order.client && order.client.phone);
+  
+  if (!targetPhone) {
     return { success: false, error: "NO_CLIENT_PHONE" };
   }
 
-  const text = formatReceiptText(order, order.client.name);
-  return await sendEvolutionMessage(order.client.phone, text);
+  const clientName = order.client?.name || "Cliente Balcão";
+  const text = formatReceiptText(order, clientName);
+  return await sendEvolutionMessage(targetPhone, text);
 }
 
 /**
