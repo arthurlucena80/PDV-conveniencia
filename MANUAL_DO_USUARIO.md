@@ -18,7 +18,7 @@ Ideal para aquele cliente que pega o produto e paga na hora.
 ## 📋 2. Como usar Comandas ou Mesas
 Ideal para clientes que estão consumindo no local ou vão pagar depois.
 
-**Abrindo uma nova comanda:**
+**Abrindo uma nova comanda:**f
 1. No menu lateral, clique em **Comanda / Mesas**.
 2. Clique no ícone de **( + )** no canto superior direito.
 3. Digite o nome do cliente ou o número da mesa (Ex: "Mesa 04" ou "João").
